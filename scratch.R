@@ -2,7 +2,7 @@
 #amended locally
 #amend locally again
 #amend locally a third time after giving git my password
-
+#another amend locally after entering password via Shell in RStudio
 library(userfriendlyscience)
 oneway
 
