@@ -334,6 +334,21 @@ tuk.moss.df
 
 ```
 
+####Carry out ANOVA on just one taxon using pckg::userfriendlyscience
+
+```{r}
+library(userfriendlyscience)
+
+#oneway(data = dplyr::filter(ht.data, taxon == "moss"), formula = height ~ year)
+ow.moss <- oneway(y = ht.data$height, x = ht.data$year, posthoc = "tukey", means = TRUE, fullDescribe = TRUE, plot = TRUE, pvalueDigits = 3)
+#class(ow.moss)
+ow.moss$output
+
+ow.moss$output$plot
+
+plot(ow.moss$intermediate$dat)
+```
+
 
 
 ####Carry out ANOVA on all taxons
