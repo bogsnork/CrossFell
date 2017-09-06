@@ -1,0 +1,389 @@
+---
+title: 'Statistics Case Study: Cross Fell Grazing 2013'
+author: "CK"
+date: "24 August 2017"
+output: html_document
+---
+
+###Time run
+Time run: `r Sys.time()`
+
+###Packages
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+```
+
+##Data preparation
+
+###Import data - cover part
+Import the csv file provided
+```{r, echo=T}
+raw <- read.csv(file = "CROSS FELL COVER ALL.csv", sep = ",", quote = "",  header = T, skipNul = T)
+```
+
+
+###Wrangle data - cover
+####Names
+lets have a look at the names: 
+```{r}
+names(raw)
+```
+They are a bit of a mess.  
+
+We can strip out a lot automatically, and replace some of the more exotic characters. Here I will remove the periods and replace `VM13.` with `Vm13` as names in **R** are case sensitive.   
+```{r}
+names(raw) <- gsub("\\.", "", names(raw))
+colnames(raw)[5] <- c("Vm13")
+#colnames(raw)
+```
+
+####Strip
+We've got some unnecessary summary columns: They all start with `C`.  We'll strip them out: 
+```{r}
+raw[,grep("C", names(raw))] <- NULL
+#names(raw)
+```
+
+DM has advised:
+
+> Vmb – b indicates a version of the data with a couple of outliers – 10% cover – removed in 2008
+
+So I am going to use the version without outliers (Vmb) as this is what DM did.  I'll delete all the Vm columns, and I'll subsequently rename Vmb to Vm:
+
+```{r}
+raw[c("Vm03", "Vm05", "Vm08", "Vm10", "Vm13")] <- NULL
+colnames(raw)[1:5] <- c("Vm03", "Vm05", "Vm08", "Vm10", "Vm13")
+#names(raw)
+```
+
+
+Finally we've got the natural log of moss, which we'll remove, because it is a derrived value and at this stage we only want the observations. 
+```{r}
+raw[,grep("lnmoss", names(raw))] <- NULL
+names(raw)
+```
+
+
+
+####Make tidy
+Now lets put this into [**tidy**](http://r4ds.had.co.nz/tidy-data.html#tidy-data-1) format:
+  
+> 1. Each **variable**    must have its own **column**.  
+> 2. Each **observation** must have its own **row**.  
+> 3. Each **value**       must have its own **cell**.  
+  
+In this case the observations are of percent cover, and they key (currently column names) define a taxon and a year.  
+```{r}
+cov.data <- gather(data = raw, key = "tax.surv", value = "cover", na.rm = TRUE, factor_key = TRUE)
+head(cov.data) #have a look
+dim(cov.data) #get dimensions
+levels(cov.data$tax.surv) #check all the variables are there
+```
+
+Now we need to split the `tax.surv` column. 
+```{r}
+cov.data <- separate(data = cov.data, col = tax.surv, into = c("taxon", "year"), sep = -3)
+cov.data$taxon <- as.factor(cov.data$taxon)
+levels(cov.data$taxon)
+head(cov.data)
+summary(cov.data)
+```
+
+Finally sort out the `year` column:
+```{r}
+cov.data$year[which(cov.data$year=="03")] <- 2003
+cov.data$year[which(cov.data$year=="05")] <- 2005
+cov.data$year[which(cov.data$year=="08")] <- 2008
+cov.data$year[which(cov.data$year=="10")] <- 2010
+cov.data$year[which(cov.data$year=="13")] <- 2013
+
+cov.data$year <- as.factor(cov.data$year)
+levels(cov.data$year) <- c("2003", "2005", "2008", "2010", "2013")
+```
+
+we good?
+```{r}
+summary(cov.data)
+```
+**we good.**
+  
+  
+  
+###Import data - height 
+Import the csv file which I previously opened in Minitab and saved (probably wrongly in Unicode)
+```{r, echo=T}
+raw <- read.csv(file = "CROSS FELL HEIGHT ALL.csv", sep = ",", quote = "",  header = T, skipNul = T)
+```
+
+###Wrangle data - height
+####Names
+lets have a look at the names: 
+```{r, echo=T}
+names(raw)
+```
+They are a bit of a mess.  
+We can strip out a lot automatically, and replace some of the more exotic characters.  Here I will remove the `X.` and the periods, and replace the first column name entirely.  
+```{r}
+names(raw) <- gsub("ht", "", names(raw))
+names(raw) <- gsub("X.", "", names(raw))
+names(raw) <- gsub("\\.", "", names(raw))
+names(raw)
+```
+
+####Strip
+We've got some unnecessary summary columns: They all start with `C`.  We'll strip them out: 
+```{r}
+raw[,grep("C", names(raw))] <- NULL
+#names(raw)
+```
+
+
+####Make tidy
+Now lets put this into **tidy** format.
+
+In this case the observations are of percent cover, and they key (currently column names) define a taxon and a year.  
+```{r}
+ht.data <- gather(data = raw, key = "tax.surv", value = "height", na.rm = TRUE, factor_key = TRUE)
+head(ht.data) #have a look
+dim(ht.data) #get dimensions
+levels(ht.data$tax.surv) #check all the variables are there
+```
+
+Now we need to split the `tax.surv` column. 
+```{r}
+ht.data <- separate(data = ht.data, col = tax.surv, into = c("taxon", "year"), sep = -3)
+ht.data$taxon <- as.factor(ht.data$taxon)
+levels(ht.data$taxon)
+head(ht.data)
+summary(ht.data)
+```
+
+Finally sort out the `year` column:
+```{r}
+ht.data$year[which(ht.data$year=="03")] <- 2003
+ht.data$year[which(ht.data$year=="05")] <- 2005
+ht.data$year[which(ht.data$year=="08")] <- 2008
+ht.data$year[which(ht.data$year=="10")] <- 2010
+ht.data$year[which(ht.data$year=="13")] <- 2013
+
+ht.data$year <- as.factor(ht.data$year)
+levels(ht.data$year) <- c("2003", "2005", "2008", "2010", "2013")
+```
+
+*we good?*
+```{r}
+summary(ht.data)
+```
+**we good.**
+  
+  
+###Import data - all quadrat data
+  
+  Import minitab file
+```{r, echo=T}
+#raw <- read.table("cross fell cover all.MTP", quote="", comment.char="", skip = 2)
+```
+*not working, have asked DM for csv*
+  
+  ###Merge data
+  
+  *we can't do this at the moment because we don't have the quadrat data*
+  
+  ###Contextual data
+  
+  ####Quadrats
+  
+  Number of quadrats surveyed per year (taken from report)
+```{r}
+quad.n <- data.frame(year = c("2003", "2005", "2008", "2010", "2013"), n.total = c(42, 44, 20, 31, 56))
+```
+
+<!-- page break -->
+  ----------
+  
+##Data analysis
+###Exploratory data anlysis
+  
+####plot cover values: 
+```{r}
+ggplot(data = cov.data, mapping = aes(y = cover, x = year)) +
+  geom_boxplot(aes(colour = taxon))
+```
+
+Looks good.  `moss` is most common, some sort of pattern maybe.  
+
+####look at means: 
+```{r}
+cov.means <- cov.data %>%
+  group_by(taxon, year) %>% 
+  summarise(mean = mean(cover), median = median(cover), sd = sd(cover), 
+            present = length(cover[which(cover!=0)]), n = length(cover))
+kable(cov.means, digits = 2, caption = "Mean percent cover")
+```
+
+####plot vegetation heights: 
+```{r}
+ggplot(data = ht.data, mapping = aes(y = height, x = year)) +
+  geom_boxplot(aes(colour = taxon))
+```
+
+
+####Height means: 
+```{r}
+ht.means <- ht.data %>%
+  group_by(taxon, year) %>% 
+  summarise(mean = mean(height), median = median(height), sd = sd(height), 
+            present = length(height[which(height!=0)]), n = length(height)) 
+kable(ht.means, digits = 2, caption = "Mean vegetation height")
+```
+
+####recreate table from report
+Now lets recreate the table of mean heights from the report (Table 1)
+```{r}
+Table1 <- spread(data = select(.data = ht.means, taxon, year, mean), 
+                 key = year, 
+                 value = mean) 
+knitr::kable(Table1, digits = 2, caption = "Table 1: Mean height of key species groups measured in each survey year")
+```
+
+
+####Frequencies
+Lets try to calculate frequencies
+```{r}
+freq <- cov.means[,c("taxon", "year", "present", "n")]
+freq <- full_join(freq, quad.n, by = "year")
+freq$freq.n.total <- freq$present / freq$n.total
+freq$freq.n <- freq$present / freq$n
+kable(freq, digits = 2, caption = "Frequency: number and proportion of quadrats in which taxon was found")
+```
+
+#####Problems: 
+
+* there are cases where the number of observations `n` is higher than the number of quadrats were surveyed according to the report `n.total`.  `r kable(freq[which(freq$n > freq$n.total), c("taxon", "year", "n", "n.total")], digits = 2, caption = "More observations than reported quadrats")`  Will need to check the full data when we get it. For the time being we'll use `n` the total number of observations calculated from the number of records (including 0 values), rather than `n.total` the reported number.
+
+* the data doesn't quite tally with the report, e.g. bilberry in 2013 was found in 25 quadrats, but report says 30.  
+####Table Frequencies by year and taxon
+```{r}
+TableFreq <- spread(data = select(.data = freq, taxon, year, freq.n), 
+                    key = year, 
+                    value = freq.n)
+knitr::kable(TableFreq, digits = 2, caption = "Frequency: proportion of quadrats in which taxon was found")
+```
+
+
+
+#Replicate report
+
+##4.2	Vegetation condition 
+
+###4.2.1   Dominant Graminoids
+
+> In 2013, sheep’s fescue (Festuca ovina) was recorded as being the dominant graminoid in 14 (25%) of quadrats (figure 2), with an average sward height of 2.86 cm (table 1). Stiff sedge (Carex bigelowii) was recorded as dominant in 33(59%) quadrats, with an average sward height of 6.94 cm.  From figure 2 it can be seen that the proportion of quadrats in which sheep’s fescue is dominant has steadily decreased from 81% in 2003, whilst the proportion in which stiff sedge is judged to be dominant has increased from 14.3%.
+
+> Figure 2.  The proportion of quadrats in which sheep’s fescue and stiff sedge are dominant in each survey, 2003 – 2010.
+
+Cannot replicate this, because we don't have the species data available.   
+ 
+> Table 1.  Mean height of key species groups measured in each survey year
+
+Species |2003	|2005	|2008	|2010	|2013
+--- |--- |--- |--- |--- |---
+Bilberry	|2.4a	|2.88a	|2.58a	|4.66c |3.53b
+Sheep’s fescue	|3.11a	|3.78b	|3.88ab |3.89ab |2.86a
+Stiff sedge	|4.2a	|7.13b	|6.56b	|7.56b	|6.94b
+Moss/ lichen	|1.95a	|2.37a |3.48b |3.48b |3.56b
+All graminoids	|3.28a |4.46b	|5.04bc	|6.45d |5.75cd
+
+Below is the same table, recalculated in R but missing Stiff sedge as I don't have the data for that.  I don't know what the letters mean: 
+```{r, echo=FALSE}
+Table1 <- spread(data = select(.data = ht.means, taxon, year, mean), 
+                 key = year, 
+                 value = mean) 
+names(Table1)[1] <- "Species"
+Table1 <- Table1 %>% 
+  as.data.frame() %>% 
+  mutate(Species = factor(c("Sheep's Fescue", "All graminoids", "Moss/ lichen", "Bilberry"), 
+                          levels = c("Bilberry", "Sheep's Fescue", "Moss/ lichen", "All graminoids"))) %>% 
+  arrange(Species)
+
+knitr::kable(Table1, digits = 2, caption = "Table 1: Mean height of key species groups measured in each survey year")
+```
+
+
+####Carry out ANOVA on just one taxon
+
+```{r}
+aov.moss <- aov(data = dplyr::filter(ht.data, taxon == "moss"), formula = height ~ year)
+anova(aov.moss)
+print(model.tables(aov.moss, "means"), digits = 3)
+model.tables(x = aov.moss)
+tuk.moss <- TukeyHSD(aov.moss)
+tuk.moss
+plot(tuk.moss)
+
+tuk.moss.df <- data.frame(tuk.moss$year) %>%
+  add_rownames("year") %>% 
+  separate(col = year, into = c("year2", "year1"), sep = "-") %>% 
+  mutate(year.diff = as.numeric(year2) - as.numeric(year1)) %>% 
+  arrange(p.adj) %>% 
+  filter(p.adj<0.05)
+tuk.moss.df  
+
+
+```
+
+
+
+####Carry out ANOVA on all taxons
+
+```{r}
+fit <- aov(data = ht.data, formula = height ~ year*taxon)
+anova(fit)
+print(model.tables(fit), digits = 3)
+tuk <- TukeyHSD(fit)
+tuk
+class(tuk)
+plot(tuk)
+tuk$`year:taxon`
+
+tuk.df <- data.frame(tuk$year) %>%
+  add_rownames("year") %>% 
+  separate(col = year, into = c("year2", "year1"), sep = "-") %>% 
+  mutate(year.diff = as.numeric(year2) - as.numeric(year1)) %>% 
+  arrange(p.adj) %>% 
+  filter(p.adj<0.05)
+tuk.df  
+
+
+```
+
+
+```{r}
+fit.aov <- aov(data = dplyr::filter(ht.data, taxon == "Fo"), formula = height ~ year)
+anova(fit.aov)
+```
+
+```{r}
+fit.aov <- aov(data = dplyr::filter(ht.data, taxon == "grm"), formula = height ~ year)
+anova(fit.aov)
+```
+
+```{r}
+fit.aov <- aov(data = dplyr::filter(ht.data, taxon == "Vm"), formula = height ~ year)
+anova(fit.aov)
+```
+
+
+
+> It can be seen from table 1 that the mean height of sheep’s fescue increased significantly (p<0.005) from 3.11 cm in 2003 to 3.78 cm in 2005 (the 2005 mean value has narrower associated confidence limits for pairwise comparisons with 2003 than the 2008 and 2010 values).  Further increase to 3.88 cm in 2008 and 3.89 in 2010 are however not significant, and the mean height of 2.86 cm in 2013 is significantly lower than that recorded in the three previous surveys, and not significantly different from the 2003 mean height.  The mean height of stiff sedge increased significantly (p<0.001) to 7.13 cm in 2005, from 4.2 cm in 2003.  In 2008 the main height was slightly lower than 2005 at 6.56 cm, before increasing to the highest recorded mean of 7.56 cm in 2010 and dropping slightly again to 6.94 cm in 2013, but these changes since 2005 are not significant. These mean height trends are also shown in figure 3.
+
+> The mean height of all graminoid species (grasses and sedges) together are shown in figure 3 and table 1.  This shows a significant (p<0.001) increase from 3.28 cm in 2003 to 6.45 cm in 2010.  The mean on 5.75 cm in 2013 is slightly lower, but not significantly different.
+
+
+ 
+
+> Figure 3. Mean height of key vegetation components: bilberry, sheep’s fescue, stiff sedge and moss and lichens
+
+
