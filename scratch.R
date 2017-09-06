@@ -1,6 +1,8 @@
 #scratch
 #amended locally
 #amend locally again
+#amend locally a third time after giving git my password
+
 library(userfriendlyscience)
 oneway
 
