@@ -172,9 +172,11 @@ The variances of the moss data are homogeneous according to this test, but none 
 
 As each taxon failed one or more tests for homoscedacity, we cannot use ANOVA to look for differences in means.  We must therefore use an alternative test.  
 
-###Non-parametric tests: assumptions
+###Non-parametric tests
 
-The Kruskal-Wallis test of ranks: **if the p-value is < 0.05 then data not suitable for ANOVA**
+The Kruskal Wallis test of ranks is non-parametric, which means it does not require the data to be normally distributed or homoscedastic.  This means it can handle situations where there are a lot of outliers.  It is less powerful than one-way ANOVA, which means more likely fail to detect an effect (type II error), but it is less likely to report an effect if there isn't one (type I error).   The null hypothesis of the test is that data are taken from the same population.  
+
+The Kruskal-Wallis test of ranks: **if the p-value is < 0.05 then we reject the null hypothesis that there is no change**
 
 ```{r}
 #all taxa
@@ -191,6 +193,54 @@ kruskal.test(height ~ year, data = filter(ht.data, taxon == "moss"))
 
 #bilberry
 kruskal.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+```
+
+The p-value for all taxa is substantialy below 0.05, which strongly support rejecting the null hypothesis, which suggests that there is significant change in vegetation height
+
+####Post-hoc testing: 
+This test does not indicate which pairs of observations are significantly diferent from each other.  We can carry out pairwise Mann-Whitney U tests on each pair, given that we have found there to be a significant difference between the groups. In `R` this test uses awkward syntax so we need to filter the data first using `ht.data.test <- filter(ht.data, taxon = "taxon")` 
+
+```{r}
+#all taxa
+ht.data.test <- ht.data
+pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
+```
+
+Significant differences are found in all successive surveys except 2005-2008.   
+
+
+```{r}
+#Sheep's fescue
+ht.data.test <- filter(ht.data, taxon == "Fo")
+pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
+```
+For Sheep's fescue, there is a significant change from 2003-2005 (p = 0.00157) and 2010-2013 (p = 0.00202).  There is no significant change between the last survey in 2013 and the first survey in 2003.
+
+```{r}
+#all graminoids
+ht.data.test <- filter(ht.data, taxon == "grm")
+pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
+```
+For all graminoids there is signifcant difference between 2003-2005 (p < 0.0001) and 2008-2010 (p = 0.0065).  The difference between teh original survey in 2003 and the final survey in 2013 is significant (p<0.0001)
+
+```{r}
+#Mosses and lichen
+ht.data.test <- filter(ht.data, taxon == "moss")
+pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
+```
+For mosses and lichen there was no significant difference between successive surveys.  However, the 2003 heights were significantly different the final survey in 2013 (p<0.0001)
+
+
+```{r}
+#bilberry
+ht.data.test <- filter(ht.data, taxon == "Vm")
+pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
+```
+For bilberry, the 2008 heights differed significantly from the 2010 survey (p<0.0001).  The heights in 2003 were significantly different from the mean height in 2013 (p = 0.00269)
+
+
+```{r}
+rm(ht.data.test) #clean up
 ```
 
 
