@@ -2,7 +2,7 @@
 title: 'Statistics Case Study: Cross Fell Grazing 2013'
 author: "CK"
 date: "24 August 2017"
-output: html_document
+output: html_notebook
 ---
 
 ###Time run
@@ -324,7 +324,7 @@ tuk.moss
 plot(tuk.moss)
 
 tuk.moss.df <- data.frame(tuk.moss$year) %>%
-  add_rownames("year") %>% 
+  rownames_to_column("year") %>% 
   separate(col = year, into = c("year2", "year1"), sep = "-") %>% 
   mutate(year.diff = as.numeric(year2) - as.numeric(year1)) %>% 
   arrange(p.adj) %>% 
@@ -336,7 +336,7 @@ tuk.moss.df
 
 ####Carry out ANOVA on just one taxon using pckg::userfriendlyscience
 
-```{r}
+```{r, eval=FALSE}
 library(userfriendlyscience)
 
 #oneway(data = dplyr::filter(ht.data, taxon == "moss"), formula = height ~ year)
@@ -358,18 +358,18 @@ fit <- aov(data = ht.data, formula = height ~ year*taxon)
 anova(fit)
 print(model.tables(fit), digits = 3)
 tuk <- TukeyHSD(fit)
-tuk
+#tuk
 class(tuk)
 plot(tuk)
 tuk$`year:taxon`
 
 tuk.df <- data.frame(tuk$year) %>%
-  add_rownames("year") %>% 
+  rownames_to_column(var = "year") %>% 
   separate(col = year, into = c("year2", "year1"), sep = "-") %>% 
   mutate(year.diff = as.numeric(year2) - as.numeric(year1)) %>% 
   arrange(p.adj) %>% 
   filter(p.adj<0.05)
-tuk.df  
+#tuk.df  
 
 
 ```
