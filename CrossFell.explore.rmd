@@ -1,0 +1,91 @@
+---
+title: 'Statistics Case Study: Cross Fell Grazing 2013: Data Exploration'
+author: "CK"
+date: "7 Sept 2017"
+output: html_notebook
+---
+
+###Time run
+Time run: `r Sys.time()`
+
+###Packages
+```{r}
+library(tidyverse)
+```
+
+
+###Load data
+
+```{r}
+load(file="CrossFell.data.prepd.rda")
+```
+
+
+###Exploratory data anlysis
+  
+####plot cover values: 
+```{r}
+ggplot(data = cov.data, mapping = aes(y = cover, x = year)) +
+  geom_boxplot(aes(colour = taxon))
+```
+
+Looks good.  `moss` is most common, some sort of pattern maybe.  
+
+####look at means: 
+```{r}
+cov.means <- cov.data %>%
+  group_by(taxon, year) %>% 
+  summarise(mean = mean(cover), median = median(cover), sd = sd(cover), 
+            present = length(cover[which(cover!=0)]), n = length(cover))
+kable(cov.means, digits = 2, caption = "Mean percent cover")
+```
+
+####plot vegetation heights: 
+```{r}
+ggplot(data = ht.data, mapping = aes(y = height, x = year)) +
+  geom_boxplot(aes(colour = taxon))
+```
+
+
+####Height means: 
+```{r}
+ht.means <- ht.data %>%
+  group_by(taxon, year) %>% 
+  summarise(mean = mean(height), median = median(height), sd = sd(height), 
+            present = length(height[which(height!=0)]), n = length(height)) 
+kable(ht.means, digits = 2, caption = "Mean vegetation height")
+```
+
+####recreate table from report
+Now lets recreate the table of mean heights from the report (Table 1)
+```{r}
+Table1 <- spread(data = select(.data = ht.means, taxon, year, mean), 
+                 key = year, 
+                 value = mean) 
+knitr::kable(Table1, digits = 2, caption = "Table 1: Mean height of key species groups measured in each survey year")
+```
+
+
+####Frequencies
+Lets try to calculate frequencies
+```{r}
+freq <- cov.means[,c("taxon", "year", "present", "n")]
+freq <- full_join(freq, quad.n, by = "year")
+freq$freq.n.total <- freq$present / freq$n.total
+freq$freq.n <- freq$present / freq$n
+kable(freq, digits = 2, caption = "Frequency: number and proportion of quadrats in which taxon was found")
+```
+
+#####Problems: 
+
+* there are cases where the number of observations `n` is higher than the number of quadrats were surveyed according to the report `n.total`.  `r kable(freq[which(freq$n > freq$n.total), c("taxon", "year", "n", "n.total")], digits = 2, caption = "More observations than reported quadrats")`  Will need to check the full data when we get it. For the time being we'll use `n` the total number of observations calculated from the number of records (including 0 values), rather than `n.total` the reported number.
+
+* the data doesn't quite tally with the report, e.g. bilberry in 2013 was found in 25 quadrats, but report says 30.  
+####Table Frequencies by year and taxon
+```{r}
+TableFreq <- spread(data = select(.data = freq, taxon, year, freq.n), 
+                    key = year, 
+                    value = freq.n)
+knitr::kable(TableFreq, digits = 2, caption = "Frequency: proportion of quadrats in which taxon was found")
+```
+

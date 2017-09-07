@@ -1,0 +1,206 @@
+---
+title: 'Statistics Case Study: Cross Fell Grazing 2013: Data Preparation'
+author: "CK"
+date: "7 Sept 2017"
+output: html_notebook
+---
+
+###Time run
+Time run: `r Sys.time()`
+
+###Packages
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(lubridate)
+library(knitr)
+```
+
+##Data preparation
+
+###Import data - cover part
+Import the csv file provided
+```{r, echo=T}
+raw <- read.csv(file = "CROSS FELL COVER ALL.csv", sep = ",", quote = "",  header = T, skipNul = T)
+```
+
+
+###Wrangle data - cover
+####Names
+lets have a look at the names: 
+```{r}
+names(raw)
+```
+They are a bit of a mess.  
+
+We can strip out a lot automatically, and replace some of the more exotic characters. Here I will remove the periods and replace `VM13.` with `Vm13` as names in **R** are case sensitive.   
+```{r}
+names(raw) <- gsub("\\.", "", names(raw))
+colnames(raw)[5] <- c("Vm13")
+#colnames(raw)
+```
+
+####Strip
+We've got some unnecessary summary columns: They all start with `C`.  We'll strip them out: 
+```{r}
+raw[,grep("C", names(raw))] <- NULL
+#names(raw)
+```
+
+DM has advised:
+
+> Vmb – b indicates a version of the data with a couple of outliers – 10% cover – removed in 2008
+
+So I am going to use the version without outliers (Vmb) as this is what DM did.  I'll delete all the Vm columns, and I'll subsequently rename Vmb to Vm:
+
+```{r}
+raw[c("Vm03", "Vm05", "Vm08", "Vm10", "Vm13")] <- NULL
+colnames(raw)[1:5] <- c("Vm03", "Vm05", "Vm08", "Vm10", "Vm13")
+#names(raw)
+```
+
+
+Finally we've got the natural log of moss, which we'll remove, because it is a derrived value and at this stage we only want the observations. 
+```{r}
+raw[,grep("lnmoss", names(raw))] <- NULL
+names(raw)
+```
+
+
+
+####Make tidy
+Now lets put this into [**tidy**](http://r4ds.had.co.nz/tidy-data.html#tidy-data-1) format:
+  
+> 1. Each **variable**    must have its own **column**.  
+> 2. Each **observation** must have its own **row**.  
+> 3. Each **value**       must have its own **cell**.  
+  
+In this case the observations are of percent cover, and they key (currently column names) define a taxon and a year.  
+```{r}
+cov.data <- gather(data = raw, key = "tax.surv", value = "cover", na.rm = TRUE, factor_key = TRUE)
+head(cov.data) #have a look
+dim(cov.data) #get dimensions
+levels(cov.data$tax.surv) #check all the variables are there
+```
+
+Now we need to split the `tax.surv` column. 
+```{r}
+cov.data <- separate(data = cov.data, col = tax.surv, into = c("taxon", "year"), sep = -3)
+cov.data$taxon <- as.factor(cov.data$taxon)
+levels(cov.data$taxon)
+head(cov.data)
+summary(cov.data)
+```
+
+Finally sort out the `year` column:
+```{r}
+cov.data$year[which(cov.data$year=="03")] <- 2003
+cov.data$year[which(cov.data$year=="05")] <- 2005
+cov.data$year[which(cov.data$year=="08")] <- 2008
+cov.data$year[which(cov.data$year=="10")] <- 2010
+cov.data$year[which(cov.data$year=="13")] <- 2013
+
+cov.data$year <- as.factor(cov.data$year)
+levels(cov.data$year) <- c("2003", "2005", "2008", "2010", "2013")
+```
+
+we good?
+```{r}
+summary(cov.data)
+```
+**we good.**
+  
+  
+  
+###Import data - height 
+Import the csv file which I previously opened in Minitab and saved (probably wrongly in Unicode)
+```{r, echo=T}
+raw <- read.csv(file = "CROSS FELL HEIGHT ALL.csv", sep = ",", quote = "",  header = T, skipNul = T)
+```
+
+###Wrangle data - height
+####Names
+lets have a look at the names: 
+```{r, echo=T}
+names(raw)
+```
+They are a bit of a mess.  
+We can strip out a lot automatically, and replace some of the more exotic characters.  Here I will remove the `X.` and the periods, and replace the first column name entirely.  
+```{r}
+names(raw) <- gsub("ht", "", names(raw))
+names(raw) <- gsub("X.", "", names(raw))
+names(raw) <- gsub("\\.", "", names(raw))
+names(raw)
+```
+
+####Strip
+We've got some unnecessary summary columns: They all start with `C`.  We'll strip them out: 
+```{r}
+raw[,grep("C", names(raw))] <- NULL
+#names(raw)
+```
+
+
+####Make tidy
+Now lets put this into **tidy** format.
+
+In this case the observations are of percent cover, and they key (currently column names) define a taxon and a year.  
+```{r}
+ht.data <- gather(data = raw, key = "tax.surv", value = "height", na.rm = TRUE, factor_key = TRUE)
+head(ht.data) #have a look
+dim(ht.data) #get dimensions
+levels(ht.data$tax.surv) #check all the variables are there
+```
+
+Now we need to split the `tax.surv` column. 
+```{r}
+ht.data <- separate(data = ht.data, col = tax.surv, into = c("taxon", "year"), sep = -3)
+ht.data$taxon <- as.factor(ht.data$taxon)
+levels(ht.data$taxon)
+head(ht.data)
+summary(ht.data)
+```
+
+Finally sort out the `year` column:
+```{r}
+ht.data$year[which(ht.data$year=="03")] <- 2003
+ht.data$year[which(ht.data$year=="05")] <- 2005
+ht.data$year[which(ht.data$year=="08")] <- 2008
+ht.data$year[which(ht.data$year=="10")] <- 2010
+ht.data$year[which(ht.data$year=="13")] <- 2013
+
+ht.data$year <- as.factor(ht.data$year)
+levels(ht.data$year) <- c("2003", "2005", "2008", "2010", "2013")
+```
+
+*we good?*
+```{r}
+summary(ht.data)
+```
+**we good.**
+  
+  
+###Import data - all quadrat data
+
+  *we can't do this at the moment because we don't have the quadrat data*
+
+  ###Merge data
+  
+
+###Contextual data
+  
+  ####Quadrats
+  
+  Number of quadrats surveyed per year (taken from report)
+```{r}
+quad.n <- data.frame(year = c("2003", "2005", "2008", "2010", "2013"), n.total = c(42, 44, 20, 31, 56))
+```
+
+##Save and clean up
+
+```{r}
+#save to file
+save(cov.data, ht.data, quad.n, file = "CrossFell.data.prepd.rda")
+#cleanup environment
+rm(cov.data, ht.data, quad.n, raw)
+```
+

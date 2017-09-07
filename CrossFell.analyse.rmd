@@ -1,0 +1,295 @@
+---
+title: 'Statistics Case Study: Cross Fell Grazing 2013: Analysis'
+author: "CK"
+date: "7 Sept 2017"
+output: html_notebook
+---
+
+###Time run
+Time run: `r Sys.time()`
+
+##Packages
+```{r}
+.libPaths("C:/R/R-3.3.1/library")
+library(tidyverse)
+```
+
+
+##Load data
+
+```{r}
+load(file="CrossFell.data.prepd.rda")
+```
+
+
+#Replicate report
+
+##4.2	Vegetation condition 
+
+###4.2.1   Dominant Graminoids
+
+> In 2013, sheep’s fescue (Festuca ovina) was recorded as being the dominant graminoid in 14 (25%) of quadrats (figure 2), with an average sward height of 2.86 cm (table 1). Stiff sedge (Carex bigelowii) was recorded as dominant in 33(59%) quadrats, with an average sward height of 6.94 cm.  From figure 2 it can be seen that the proportion of quadrats in which sheep’s fescue is dominant has steadily decreased from 81% in 2003, whilst the proportion in which stiff sedge is judged to be dominant has increased from 14.3%.
+
+> Figure 2.  The proportion of quadrats in which sheep’s fescue and stiff sedge are dominant in each survey, 2003 – 2010.
+
+Cannot replicate this, because we don't have the species data available.   
+ 
+> Table 1.  Mean height of key species groups measured in each survey year
+
+Species |2003	|2005	|2008	|2010	|2013
+--- |--- |--- |--- |--- |---
+Bilberry	|2.4a	|2.88a	|2.58a	|4.66c |3.53b
+Sheep’s fescue	|3.11a	|3.78b	|3.88ab |3.89ab |2.86a
+Stiff sedge	|4.2a	|7.13b	|6.56b	|7.56b	|6.94b
+Moss/ lichen	|1.95a	|2.37a |3.48b |3.48b |3.56b
+All graminoids	|3.28a |4.46b	|5.04bc	|6.45d |5.75cd
+
+Below is the same table, recalculated in R but missing Stiff sedge as I don't have the data for that.  I don't know what the letters mean: 
+
+```{r, echo=FALSE}
+####Height means: 
+ht.means <- ht.data %>%
+  group_by(taxon, year) %>% 
+  summarise(mean = mean(height), median = median(height), sd = sd(height), 
+            present = length(height[which(height!=0)]), n = length(height)) 
+
+#Table 1
+Table1 <- spread(data = select(.data = ht.means, taxon, year, mean), 
+                 key = year, 
+                 value = mean) 
+names(Table1)[1] <- "Species"
+Table1 <- Table1 %>% 
+  as.data.frame() %>% 
+  mutate(Species = factor(c("Sheep's Fescue", "All graminoids", "Moss/ lichen", "Bilberry"), 
+                          levels = c("Bilberry", "Sheep's Fescue", "Moss/ lichen", "All graminoids"))) %>% 
+  arrange(Species)
+
+knitr::kable(Table1, digits = 2, caption = "Table 1: Mean height of key species groups measured in each survey year")
+```
+
+##Test for Differences in Means
+
+###ANOVA: test assumptions 
+
+The most powerful method for testing whether there is a significant change in the height of each taxon between survey years is Analysis of Variance (ANOVA).  For us to be able to use this our data must comply with teh following assumptions: 
+
+* **Independence of cases**: this is met because each quadrat was selected at random each year.  
+* **Equality of variances (homoscedasticity)**: we will test for this. 
+* **Normality**: we will test for this if the variances are equal.  
+
+
+
+####Plot data
+
+Key points to look out for 
+
+1. Outliers: look for individual points on the box plots.  Lots of outliers means the data is unlikely to meet homoscedasticity or normality assumptions.  
+
+2. Skewness: High skewness means data is unlikely to be normally distributed.  Density plot will be skewed and boxplots will be asymmetrical.
+
+3. Unequal variance: Unequal box sizes will indicate that variances are not equal.  If there is little data, then this may not be reliable, as variances can appear unequal when they aren't.
+
+
+```{r}
+#density plots by height and year 
+ggplot(ht.data, aes(x= height, colour = year)) +
+  geom_density()
+
+```
+
+```{r}
+#density plots by height and taxon
+ggplot(ht.data, aes(x= height, colour = taxon)) +
+  geom_density()
+
+```
+
+```{r}
+#density plots by height and year for each taxon
+ggplot(ht.data, aes(x= height, colour = year)) +
+  geom_density() +
+  facet_wrap(~taxon) 
+```
+
+```{r}
+#box plots by height and year for each taxon
+ggplot(ht.data, aes(y= height, x = year)) +
+  geom_boxplot() +
+  facet_wrap(~taxon) 
+```
+
+
+#####Comments on the plots: 
+Lots of outliers in Fest.ov. and graminoids.  All four appear to be skewed, in particular there are a lot of 1cm heights.  Variances of graminoids appear unequal.  
+
+
+####Test for homoskedasticity 
+Testing whether the variances are the same: 
+
+Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
+
+```{r}
+#all taxa
+bartlett.test(height ~ year, data = ht.data)
+
+#Sheep's fescue
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
+
+#all graminoids
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "grm"))
+
+#Mosses and lichen
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "moss"))
+
+#bilberry
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+
+```
+None of these have homogeneous variances.  
+
+The Fligner-Killeen test: **if the p-value is < 0.05 then data not suitable for ANOVA**
+
+```{r}
+#all taxa
+fligner.test(height ~ year, data = ht.data)
+
+#Sheep's fescue
+fligner.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
+
+#all graminoids
+fligner.test(height ~ year, data = filter(ht.data, taxon == "grm"))
+
+#Mosses and lichen
+fligner.test(height ~ year, data = filter(ht.data, taxon == "moss"))
+
+#bilberry
+fligner.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+```
+
+The variances of the moss data are homogeneous according to this test, but none of the others are.   
+
+####ANOVA: test assumptions - **Conclusion** 
+
+As each taxon failed one or more tests for homoscedacity, we cannot use ANOVA to look for differences in means.  We must therefore use an alternative test.  
+
+###Non-parametric tests: assumptions
+
+The Kruskal-Wallis test of ranks: **if the p-value is < 0.05 then data not suitable for ANOVA**
+
+```{r}
+#all taxa
+kruskal.test(height ~ year, data = ht.data)
+
+#Sheep's fescue
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
+
+#all graminoids
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "grm"))
+
+#Mosses and lichen
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "moss"))
+
+#bilberry
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+```
+
+
+
+###Carry out ANOVA on just one taxon
+
+```{r}
+#run ANOVA
+aov.moss <- aov(data = filter(ht.data, taxon == "moss"), formula = height ~ year)
+anova(aov.moss)
+aov.moss
+print(model.tables(aov.moss, "means"), digits = 3)
+
+#compute Tukey Honest Significant Differences
+tuk.moss <- TukeyHSD(aov.moss, which = "year", ordered = FALSE, conf.level = 0.95)
+tuk.moss
+
+
+tuk.moss.df <- data.frame(tuk.moss$year) %>%
+  rownames_to_column("year") %>% 
+  separate(col = year, into = c("year2", "year1"), sep = "-") %>% 
+  mutate(year1 = factor(year1, levels = c("2003", "2005", "2008", "2010", "2013")),
+         year2 = factor(year2, levels = c("2003", "2005", "2008", "2010", "2013"))) %>% 
+  mutate(year.diff = as.numeric(year2) - as.numeric(year1)) %>% 
+  arrange(p.adj) %>% 
+  filter(p.adj<0.05)
+tuk.moss.df
+tuk.moss.df$year1-tuk.moss.df$year2
+
+
+```
+
+###Carry out ANOVA on just one taxon using pckg::userfriendlyscience
+
+Not evaluated as it doesn't work except on R v.3.4.0
+
+```{r, eval=FALSE}
+library(userfriendlyscience)
+
+#oneway(data = dplyr::filter(ht.data, taxon == "moss"), formula = height ~ year)
+ow.moss <- oneway(y = ht.data$height, x = ht.data$year, posthoc = "tukey", means = TRUE, fullDescribe = TRUE, plot = TRUE, pvalueDigits = 3)
+#class(ow.moss)
+ow.moss$output
+
+ow.moss$output$plot
+
+plot(ow.moss$intermediate$dat)
+```
+
+
+
+###Carry out ANOVA on all taxons
+
+```{r}
+fit <- aov(data = ht.data, formula = height ~ taxon + year)
+anova(fit)
+print(model.tables(fit, cterms = "year",  type = "effects"), digits = 3)
+tuk <- TukeyHSD(fit)
+#tuk
+class(tuk)
+plot(tuk)
+tuk$`year:taxon`
+
+tuk.df <- data.frame(tuk$year) %>%
+  rownames_to_column(var = "year") %>% 
+  separate(col = year, into = c("year2", "year1"), sep = "-") %>% 
+  mutate(year.diff = as.numeric(year2) - as.numeric(year1)) %>% 
+  arrange(p.adj) %>% 
+  filter(p.adj<0.05)
+#tuk.df  
+
+
+```
+
+
+```{r}
+fit.aov <- aov(data = dplyr::filter(ht.data, taxon == "Fo"), formula = height ~ year)
+anova(fit.aov)
+```
+
+```{r}
+fit.aov <- aov(data = dplyr::filter(ht.data, taxon == "grm"), formula = height ~ year)
+anova(fit.aov)
+```
+
+```{r}
+fit.aov <- aov(data = dplyr::filter(ht.data, taxon == "Vm"), formula = height ~ year)
+anova(fit.aov)
+```
+
+
+
+> It can be seen from table 1 that the mean height of sheep’s fescue increased significantly (p<0.005) from 3.11 cm in 2003 to 3.78 cm in 2005 (the 2005 mean value has narrower associated confidence limits for pairwise comparisons with 2003 than the 2008 and 2010 values).  Further increase to 3.88 cm in 2008 and 3.89 in 2010 are however not significant, and the mean height of 2.86 cm in 2013 is significantly lower than that recorded in the three previous surveys, and not significantly different from the 2003 mean height.  The mean height of stiff sedge increased significantly (p<0.001) to 7.13 cm in 2005, from 4.2 cm in 2003.  In 2008 the main height was slightly lower than 2005 at 6.56 cm, before increasing to the highest recorded mean of 7.56 cm in 2010 and dropping slightly again to 6.94 cm in 2013, but these changes since 2005 are not significant. These mean height trends are also shown in figure 3.
+
+> The mean height of all graminoid species (grasses and sedges) together are shown in figure 3 and table 1.  This shows a significant (p<0.001) increase from 3.28 cm in 2003 to 6.45 cm in 2010.  The mean on 5.75 cm in 2013 is slightly lower, but not significantly different.
+
+
+ 
+
+> Figure 3. Mean height of key vegetation components: bilberry, sheep’s fescue, stiff sedge and moss and lichens
+
+
