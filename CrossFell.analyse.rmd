@@ -257,3 +257,13 @@ rm(ht.data.test) #clean up
 > Figure 3. Mean height of key vegetation components: bilberry, sheep’s fescue, stiff sedge and moss and lichens
 
 
+```{r}
+#box plots by height and year for each taxon
+ggplot(ht.means, aes(x = year, y= mean, group = taxon, colour = taxon)) +
+  geom_point() +
+  geom_line()  +
+  ylim(0,9) +
+  labs(caption = "Figure 3. Mean height of key vegetation components: bilberry, sheep’s fescue, and moss and lichens", 
+       x = "Mean height (cm)", y = "Survey year")
+ # facet_wrap(~taxon) 
+```
