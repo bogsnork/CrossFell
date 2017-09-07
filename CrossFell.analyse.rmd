@@ -69,18 +69,25 @@ knitr::kable(Table1, digits = 2, caption = "Table 1: Mean height of key species 
 
 ##Test for Differences in Means
 
-###ANOVA: test assumptions: 
+###ANOVA: test assumptions 
+
+The most powerful method for testing whether there is a significant change in the height of each taxon between survey years is Analysis of Variance (ANOVA).  For us to be able to use this our data must comply with teh following assumptions: 
+
+* **Independence of cases**: this is met because each quadrat was selected at random each year.  
+* **Equality of variances (homoscedasticity)**: we will test for this. 
+* **Normality**: we will test for this if the variances are equal.  
+
+
 
 ####Plot data
 
-
 Key points to look out for 
 
-1. Outliers: look for individual points on the box plots
+1. Outliers: look for individual points on the box plots.  Lots of outliers means the data is unlikely to meet homoscedasticity or normality assumptions.  
 
-2. Skewness: density plot will be skewed and boxplots will be asymmetrical.
+2. Skewness: High skewness means data is unlikely to be normally distributed.  Density plot will be skewed and boxplots will be asymmetrical.
 
-3. Unequal variance: box sizes are very unequal.  If there is little data, then this may not be reliable, as variances can appear unequal when they aren't.
+3. Unequal variance: Unequal box sizes will indicate that variances are not equal.  If there is little data, then this may not be reliable, as variances can appear unequal when they aren't.
 
 
 ```{r}
@@ -117,7 +124,9 @@ Lots of outliers in Fest.ov. and graminoids.  All four appear to be skewed, in p
 
 
 ####Test for homoskedasticity 
-Testing whether the variances are the same
+Testing whether the variances are the same: 
+
+Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
 
 ```{r}
 #all taxa
@@ -136,6 +145,54 @@ bartlett.test(height ~ year, data = filter(ht.data, taxon == "moss"))
 bartlett.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
 
 ```
+None of these have homogeneous variances.  
+
+The Fligner-Killeen test: **if the p-value is < 0.05 then data not suitable for ANOVA**
+
+```{r}
+#all taxa
+fligner.test(height ~ year, data = ht.data)
+
+#Sheep's fescue
+fligner.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
+
+#all graminoids
+fligner.test(height ~ year, data = filter(ht.data, taxon == "grm"))
+
+#Mosses and lichen
+fligner.test(height ~ year, data = filter(ht.data, taxon == "moss"))
+
+#bilberry
+fligner.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+```
+
+The variances of the moss data are homogeneous according to this test, but none of the others are.   
+
+####ANOVA: test assumptions - **Conclusion** 
+
+As each taxon failed one or more tests for homoscedacity, we cannot use ANOVA to look for differences in means.  We must therefore use an alternative test.  
+
+###Non-parametric tests: assumptions
+
+The Kruskal-Wallis test of ranks: **if the p-value is < 0.05 then data not suitable for ANOVA**
+
+```{r}
+#all taxa
+kruskal.test(height ~ year, data = ht.data)
+
+#Sheep's fescue
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
+
+#all graminoids
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "grm"))
+
+#Mosses and lichen
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "moss"))
+
+#bilberry
+kruskal.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+```
+
 
 
 ###Carry out ANOVA on just one taxon
