@@ -129,41 +129,46 @@ Testing whether the variances are the same:
 Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
 
 ```{r}
-#all taxa
-bartlett.test(height ~ year, data = ht.data)
-
-#Sheep's fescue
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
-
-#all graminoids
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "grm"))
-
-#Mosses and lichen
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "moss"))
-
-#bilberry
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
-
+#run test on each taxa in turn (saves results into a list)
+bart.l <- by(ht.data, ht.data$taxon, 
+             function(x) bartlett.test(height ~ year, data = x))
+#put results from list into a dataframe
+bart.df          <- data.frame(cbind(taxon = names(bart.l)))
+bart.df$statistic<- bart.l %>% map_dbl("statistic") 
+bart.df$df       <- bart.l %>% map_dbl("parameter")
+bart.df$p.value  <- bart.l %>% map_dbl("p.value") 
+bart.df$sig.sym  <- as.character(symnum(bart.df$p.value,
+                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
+                           symbols = c("***", "**", "*", "")))
+bart.df$sig.txt  <- if_else(condition = bart.df$p.value < 0.001, 
+                            true = "p<0.001", 
+                            false = paste0("p=", round(bart.df$p.value, digits=3)))
+bart.df$method   <- bart.l %>% map_chr("method")
+bart.df$formula  <- bart.l %>% map_chr("data.name")
+bart.df
 ```
 None of these have homogeneous variances.  
 
 The Fligner-Killeen test: **if the p-value is < 0.05 then data not suitable for ANOVA**
 
 ```{r}
-#all taxa
-fligner.test(height ~ year, data = ht.data)
-
-#Sheep's fescue
-fligner.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
-
-#all graminoids
-fligner.test(height ~ year, data = filter(ht.data, taxon == "grm"))
-
-#Mosses and lichen
-fligner.test(height ~ year, data = filter(ht.data, taxon == "moss"))
-
-#bilberry
-fligner.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+#run test on each taxa in turn (saves results into a list)
+flig.l <- by(ht.data, ht.data$taxon, 
+             function(x) fligner.test(height ~ year, data = x))
+#put results from list into a dataframe
+flig.df          <- data.frame(cbind(taxon = names(flig.l)))
+flig.df$statistic<- flig.l %>% map_dbl("statistic") 
+flig.df$df       <- flig.l %>% map_dbl("parameter")
+flig.df$p.value  <- flig.l %>% map_dbl("p.value") 
+flig.df$sig.sym  <- as.character(symnum(flig.df$p.value,
+                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
+                           symbols = c("***", "**", "*", "")))
+flig.df$sig.txt  <- if_else(condition = flig.df$p.value < 0.001, 
+                            true = "p<0.001", 
+                            false = paste0("p=", round(flig.df$p.value, digits=3)))
+flig.df$method   <- flig.l %>% map_chr("method")
+flig.df$formula  <- flig.l %>% map_chr("data.name")
+flig.df
 ```
 
 The variances of the moss data are homogeneous according to this test, but none of the others are.   
@@ -179,20 +184,23 @@ The Kruskal Wallis test of ranks is non-parametric, which means it does not requ
 The Kruskal-Wallis test of ranks: **if the p-value is < 0.05 then we reject the null hypothesis that there is no change**
 
 ```{r}
-#all taxa
-kruskal.test(height ~ year, data = ht.data)
-
-#Sheep's fescue
-kruskal.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
-
-#all graminoids
-kruskal.test(height ~ year, data = filter(ht.data, taxon == "grm"))
-
-#Mosses and lichen
-kruskal.test(height ~ year, data = filter(ht.data, taxon == "moss"))
-
-#bilberry
-kruskal.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+#run test on each taxa in turn (saves results into a list)
+krusk.l <- by(ht.data, ht.data$taxon, 
+             function(x) kruskal.test(height ~ year, data = x))
+#put results from list into a dataframe
+krusk.df          <- data.frame(cbind(taxon = names(krusk.l)))
+krusk.df$statistic<- krusk.l %>% map_dbl("statistic") 
+krusk.df$df       <- krusk.l %>% map_dbl("parameter")
+krusk.df$p.value  <- krusk.l %>% map_dbl("p.value") 
+krusk.df$sig.sym  <- as.character(symnum(krusk.df$p.value,
+                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
+                           symbols = c("***", "**", "*", "")))
+krusk.df$sig.txt  <- if_else(condition = krusk.df$p.value < 0.001, 
+                            true = "p<0.001", 
+                            false = paste0("p=", round(krusk.df$p.value, digits=3)))
+krusk.df$method   <- krusk.l %>% map_chr("method")
+krusk.df$formula  <- krusk.l %>% map_chr("data.name")
+krusk.df
 ```
 
 The p-value for all taxa is substantialy below 0.05, which strongly support rejecting the null hypothesis, which suggests that there is significant change in vegetation height

@@ -1,8 +1,7 @@
 #scratch
-#amended locally
-#amend locally again
-#amend locally a third time after giving git my password
-#another amend locally after entering password via Shell in RStudio
+
+
+# oneway function from pckg userfriendlyscience ----
 library(userfriendlyscience)
 oneway
 
@@ -123,3 +122,44 @@ function (y, x, posthoc = NULL, means = FALSE, fullDescribe = FALSE,
 }
 <bytecode: 0x00000000202f3238>
   <environment: namespace:userfriendlyscience>
+  
+# run tests on multiple subsets
+  
+#all taxa
+bartlett.test(height ~ year, data = ht.data)
+
+#Sheep's fescue
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
+
+#all graminoids
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "grm"))
+
+#Mosses and lichen
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "moss"))
+
+#bilberry
+bartlett.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
+
+
+group_by(ht.data, taxon)  
+
+bartlett.test(height ~ year, data = group_by(ht.data, taxon))
+bartlett.test(height ~ year, data = group_by(ht.data, taxon))
+
+library(purrr)
+tmp.bart <- by(ht.data, ht.data$taxon, function(x) bartlett.test(height ~ year, data = x))
+bart.df          <- data.frame(cbind(taxon = names(tmp.bart)))
+bart.df$statistic  <- tmp.bart %>% map_dbl("statistic") 
+bart.df$df       <- tmp.bart %>% map_dbl("parameter")
+bart.df$p.value     <- tmp.bart %>% map_dbl("p.value") 
+bart.df$sig.sym  <- symnum(bart.df$p.value, 
+                             cutpoints = c(0, 0.001, 0.01, 0.05, 1), 
+                             symbols = c("***", "**", "*", ""))
+bart.df$sig.txt  <- if_else(condition = bart.df$p.value < 0.001, 
+                            true = "p<0.001", 
+                            false = paste0("p=", round(bart.df$p.value, digits=3)))
+bart.df$method   <- tmp.bart %>% map_chr("method")
+bart.df$formula   <- tmp.bart %>% map_chr("data.name")
+
+
+
