@@ -129,6 +129,7 @@ Testing whether the variances are the same:
 Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
 
 ```{r}
+<<<<<<< HEAD
 #run test on each taxa in turn (saves results into a list)
 bart.l <- by(ht.data, ht.data$taxon, 
              function(x) bartlett.test(height ~ year, data = x))
