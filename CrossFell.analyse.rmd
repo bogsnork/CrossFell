@@ -129,21 +129,20 @@ Testing whether the variances are the same:
 Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
 
 ```{r}
-#all taxa
-bartlett.test(height ~ year, data = ht.data)
-
-#Sheep's fescue
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "Fo"))
-
-#all graminoids
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "grm"))
-
-#Mosses and lichen
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "moss"))
-
-#bilberry
-bartlett.test(height ~ year, data = filter(ht.data, taxon == "Vm"))
-
+tmp.bart <- by(ht.data, ht.data$taxon, function(x) bartlett.test(height ~ year, data = x))
+bart.df          <- data.frame(cbind(taxon = names(tmp.bart)))
+bart.df$statistic  <- tmp.bart %>% map_dbl("statistic") 
+bart.df$df       <- tmp.bart %>% map_dbl("parameter")
+bart.df$p.value     <- tmp.bart %>% map_dbl("p.value") 
+bart.df$sig.sym  <- symnum(bart.df$p.value, 
+                             cutpoints = c(0, 0.001, 0.01, 0.05, 1), 
+                             symbols = c("***", "**", "*", ""))
+bart.df$sig.txt  <- if_else(condition = bart.df$p.value < 0.001, 
+                            true = "p<0.001", 
+                            false = paste0("p=", round(bart.df$p.value, digits=3)))
+bart.df$method   <- tmp.bart %>% map_chr("method")
+bart.df$formula   <- tmp.bart %>% map_chr("data.name")
+bart.df
 ```
 None of these have homogeneous variances.  
 
