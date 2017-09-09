@@ -148,8 +148,8 @@ Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05
 
 ```{r}
 #run test on each taxa in turn (saves results into a list)
-bart.l <- by(ht.data, ht.data$taxon, 
-             function(x) bartlett.test(height ~ year, data = x))
+bart.l <- as.list(by(ht.data, ht.data$taxon, 
+             function(x) bartlett.test(height ~ year, data = x)))
 #put results from list into a dataframe
 bart.df          <- data.frame(cbind(taxon = names(bart.l)))
 bart.df$statistic<- bart.l %>% map_dbl("statistic") 
@@ -171,8 +171,8 @@ The Fligner-Killeen test: **if the p-value is < 0.05 then data not suitable for 
 
 ```{r}
 #run test on each taxa in turn (saves results into a list)
-flig.l <- by(ht.data, ht.data$taxon, 
-             function(x) fligner.test(height ~ year, data = x))
+flig.l <- as.list(by(ht.data, ht.data$taxon, 
+             function(x) fligner.test(height ~ year, data = x)))
 #put results from list into a dataframe
 flig.df          <- data.frame(cbind(taxon = names(flig.l)))
 flig.df$statistic<- flig.l %>% map_dbl("statistic") 
@@ -203,8 +203,8 @@ The Kruskal-Wallis test of ranks: **if the p-value is < 0.05 then we reject the 
 
 ```{r}
 #run test on each taxa in turn (saves results into a list)
-krusk.l <- by(ht.data, ht.data$taxon, 
-             function(x) kruskal.test(height ~ year, data = x))
+krusk.l <- as.list(by(ht.data, ht.data$taxon, 
+             function(x) kruskal.test(height ~ year, data = x)))
 #put results from list into a dataframe
 krusk.df          <- data.frame(cbind(taxon = names(krusk.l)))
 krusk.df$statistic<- krusk.l %>% map_dbl("statistic") 
