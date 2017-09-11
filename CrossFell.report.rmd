@@ -35,7 +35,9 @@ quad.n
 ```
 The surveys took place in 2003, 2005, 2008, 2010 and 2013.  Survey quadrats were randomly located each year.  There were different numbers of quadrats in each survey year.  
   
-The data available for this analysis had already been collated by the lead investigator into a spreadsheet in the following format:   
+The data available for this analysis had already been collated by the lead investigator into a spreadsheet in the following format:  
+
+###
   
 Species are aggregated into four taxa:   
   
@@ -50,7 +52,7 @@ There is a record for each height measurement per taxon per year (although the q
 The received data was recast into a `tidy` format with each column comprising a variable (taxon, year, height) and each row an individual height measurement.  The version of Bilberry data without outliers was used.  The result is a table of `r dim(ht.data)[2]` columns and `r dim(ht.data)[1]` rows / measurements: 
 `r head(ht.data)`. 
 
-The breakdown of quadrats by taxon and year is as follows: 
+The number of measurements taken of each taxon in each year is as follows: 
 ```{r, echo=FALSE}
 kable(table(ht.data$taxon, ht.data$year))
 ```
@@ -147,7 +149,7 @@ Testing whether the variances are the same:
 Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
 
 ```{r}
-#run test on each taxa in turn (saves results into a list)
+#run test on each taxa in turn (saves resultsht into a list)
 bart.l <- as.list(by(ht.data, ht.data$taxon, 
              function(x) bartlett.test(height ~ year, data = x)))
 #put results from list into a dataframe
@@ -191,9 +193,54 @@ flig.df
 
 The variances of the moss data are homogeneous according to this test, but none of the others are.   
 
+####
+test for normality using the Anderson Darling test for the composite hypothesis of normality.  If p > 0.05 then the distribution is normal.   
+```{r}
+library(nortest)
+ad.test(ht.data$height)
+```
+The height data for all species is not normal.  
+
+```{r}
+#run test on each taxa and year combination in turn 
+norm.df.taxa <- ht.data %>%
+  group_by(taxon) %>%
+  do(broom::tidy(ad.test(.$height)))
+
+norm.df.taxa$sig.sym  <- as.character(symnum(norm.df.taxa$p.value,
+                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
+                           symbols = c("***", "**", "*", "")))
+norm.df.taxa$sig.txt  <- if_else(condition = norm.df.taxa$p.value < 0.001, 
+                            true = "p<0.001", 
+                            false = paste0("p=", 
+                                           round(norm.df.taxa$p.value, digits=3)))
+norm.df.taxa[c(1,2,5,6,3)] %>% arrange(-p.value)
+```
+The distributions of all taxa is not normal. 
+
+```{r}
+#run test on each taxa and year combination in turn 
+norm.df <- ht.data %>%
+  group_by(taxon, year) %>%
+  do(broom::tidy(ad.test(.$height)))
+
+norm.df$sig.sym  <- as.character(symnum(norm.df$p.value,
+                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
+                           symbols = c("***", "**", "*", "")))
+norm.df$sig.txt  <- if_else(condition = norm.df$p.value < 0.001, 
+                            true = "p<0.001", 
+                            false = paste0("p=", 
+                                           round(norm.df$p.value, digits=3)))
+norm.df[c(1,2,3,6,7,4)] %>% arrange(-p.value)
+```
+The distribution of only 6 of the 20 taxon/year combinations are normal.   
+
+
+
+
 ####ANOVA: test assumptions - **Conclusion** 
 
-As each taxon failed one or more tests for homoscedacity, we cannot use ANOVA to look for differences in means.  We must therefore use an alternative test.  
+As each taxon failed one or more tests for homoscedacity, and the normality assumption is also violated in the majority of cases, we cannot use ANOVA to look for differences in means.  We must therefore use an alternative test.  
 
 ###Non-parametric tests
 
