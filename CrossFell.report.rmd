@@ -13,6 +13,7 @@ Time run: `r Sys.time()`
 #.libPaths("C:/R/R-3.3.1/library")
 library(tidyverse)
 library(knitr)
+library(ggpubr) 
 ```
 
 
@@ -60,6 +61,9 @@ kable(table(ht.data$taxon, ht.data$year))
 The data were saved into the Rdata format file *CrossFell.data.prepd.rda*.
 
 ###Results
+```{r}
+summary(ht.data)
+```
 
 The following are the means 
 
@@ -218,7 +222,7 @@ norm.df.taxa[c(1,2,5,6,3)] %>% arrange(-p.value)
 ```
 The distributions of all taxa is not normal. 
 
-```{r}
+```{r,  }
 #run test on each taxa and year combination in turn 
 norm.df <- ht.data %>%
   group_by(taxon, year) %>%
@@ -231,6 +235,8 @@ norm.df$sig.txt  <- if_else(condition = norm.df$p.value < 0.001,
                             true = "p<0.001", 
                             false = paste0("p=", 
                                            round(norm.df$p.value, digits=3)))
+
+library(pander) 
 norm.df[c(1,2,3,6,7,4)] %>% arrange(-p.value)
 ```
 The distribution of only 6 of the 20 taxon/year combinations are normal.   
@@ -274,12 +280,37 @@ The p-value for all taxa is substantialy below 0.05, which strongly support reje
 This test does not indicate which pairs of observations are significantly diferent from each other.  We can carry out pairwise Mann-Whitney U tests on each pair, given that we have found there to be a significant difference between the groups. In `R` this test uses awkward syntax so we need to filter the data first using `ht.data.test <- filter(ht.data, taxon = "taxon")` 
 
 ```{r}
-#all taxa
+#all taxa - carry out tests and report p values
 ht.data.test <- ht.data
 pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
 ```
 
-Significant differences are found in all successive surveys except 2005-2008.   
+Significant differences are found in all successive surveys except 2005-2008. 
+
+```{r}
+#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
+wilc.pairw <- compare_means(formula = height ~ year, 
+                            data = ht.data.test, 
+                            method = "wilcox.test", paired = FALSE)
+wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
+
+#generate list of brackets
+my_comparisons <- list() 
+for (i in 1:nrow(wilc.pairw)) {
+  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
+  }
+
+#prepare plot
+p <- ggplot(ht.data.test, aes(x = year, y = height)) +
+  geom_boxplot()
+
+# Add pairwise comparisons p-value to plot
+p + stat_compare_means(comparisons = my_comparisons, 
+                       label = "p.signif", 
+                       hide.ns = FALSE)
+```
+
+
 
 
 ```{r}
@@ -289,11 +320,61 @@ pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FA
 ```
 For Sheep's fescue, there is a significant change from 2003-2005 (p = 0.00157) and 2010-2013 (p = 0.00202).  There is no significant change between the last survey in 2013 and the first survey in 2003.
 
+
+```{r}
+#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
+wilc.pairw <- compare_means(formula = height ~ year, 
+                            data = ht.data.test, 
+                            method = "wilcox.test", paired = FALSE)
+wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
+
+#generate list of brackets
+my_comparisons <- list() 
+for (i in 1:nrow(wilc.pairw)) {
+  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
+  }
+
+#prepare plot
+p <- ggplot(ht.data.test, aes(x = year, y = height)) +
+  geom_boxplot()
+
+# Add pairwise comparisons p-value to plot
+p + stat_compare_means(comparisons = my_comparisons, 
+                       label = "p.signif", 
+                       hide.ns = FALSE)
+```
+
+
 ```{r}
 #all graminoids
 ht.data.test <- filter(ht.data, taxon == "grm")
 pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
 ```
+
+
+```{r}
+#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
+wilc.pairw <- compare_means(formula = height ~ year, 
+                            data = ht.data.test, 
+                            method = "wilcox.test", paired = FALSE)
+wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
+
+#generate list of brackets
+my_comparisons <- list() 
+for (i in 1:nrow(wilc.pairw)) {
+  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
+  }
+
+#prepare plot
+p <- ggplot(ht.data.test, aes(x = year, y = height)) +
+  geom_boxplot()
+
+# Add pairwise comparisons p-value to plot
+p + stat_compare_means(comparisons = my_comparisons, 
+                       label = "p.signif", 
+                       hide.ns = FALSE)
+```
+
 For all graminoids there is signifcant difference between 2003-2005 (p < 0.0001) and 2008-2010 (p = 0.0065).  The difference between teh original survey in 2003 and the final survey in 2013 is significant (p<0.0001)
 
 ```{r}
@@ -301,6 +382,32 @@ For all graminoids there is signifcant difference between 2003-2005 (p < 0.0001)
 ht.data.test <- filter(ht.data, taxon == "moss")
 pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
 ```
+
+
+```{r}
+#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
+wilc.pairw <- compare_means(formula = height ~ year, 
+                            data = ht.data.test, 
+                            method = "wilcox.test", paired = FALSE)
+wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
+
+#generate list of brackets
+my_comparisons <- list() 
+for (i in 1:nrow(wilc.pairw)) {
+  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
+  }
+
+
+#prepare plot
+p <- ggplot(ht.data.test, aes(x = year, y = height)) +
+  geom_boxplot()
+
+# Add pairwise comparisons p-value to plot
+p + stat_compare_means(comparisons = my_comparisons, 
+                       label = "p.signif", 
+                       hide.ns = FALSE)
+```
+
 For mosses and lichen there was no significant difference between successive surveys.  However, the 2003 heights were significantly different the final survey in 2013 (p<0.0001)
 
 
@@ -309,6 +416,32 @@ For mosses and lichen there was no significant difference between successive sur
 ht.data.test <- filter(ht.data, taxon == "Vm")
 pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
 ```
+
+
+```{r}
+#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
+wilc.pairw <- compare_means(formula = height ~ year, 
+                            data = ht.data.test, 
+                            method = "wilcox.test", paired = FALSE)
+wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
+
+#generate list of brackets
+my_comparisons <- list() 
+for (i in 1:nrow(wilc.pairw)) {
+  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
+  }
+
+#prepare plot
+p <- ggplot(ht.data.test, aes(x = year, y = height)) +
+  geom_boxplot()
+
+# Add pairwise comparisons p-value to plot
+p + stat_compare_means(comparisons = my_comparisons, 
+                       label = "p.signif", 
+                       hide.ns = FALSE) +
+  labs(title = "Bilberry height by survey year", caption = "Brackets indicate significant differences.")
+```
+
 For bilberry, the 2008 heights differed significantly from the 2010 survey (p<0.0001).  The heights in 2003 were significantly different from the mean height in 2013 (p = 0.00269)
 
 
