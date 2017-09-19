@@ -1,0 +1,20 @@
+---
+title: "Scratch"
+author: "CK"
+date: "19 September 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+#Natural England Statistics Case Study 
+##Analysis of Variance in a grazing impacts study at Cross Fell SSSI
+
+**Study:** *Survey of Grazing Impact on Cross Fell Montane Heath and Analysis of Change 2003-2013, Martin D., Natural England, 2014*
+
+## Background
+Cross Fell is part of Kirkland Fell, one of five contiguous upland commons in eastern Cumbria that came into Countryside Stewardship Scheme (CSS) Agreement Between 2000 and 2003.  Under the terms of the agreement, stocking levels were reduced and shepherding introduced to further limit grazing pressure on sensitive habitats.  As part of the project, the area of montane heath on the summit plateau of Cross Fell was surveyed in October 2003. Attributes of the vegetation condition and species composition were recorded.  The survey was repeated in 2005, 2008, 2010 and 2013.

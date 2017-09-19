@@ -2,15 +2,18 @@
 title: 'Statistics Case Study: Cross Fell Grazing 2013: Report'
 author: "CK"
 date: "19 Sept 2017"
-output: html_notebook
+output:
+  word_document: default
+  html_notebook: default
 ---
 Time run: `r Sys.time()`
 
-```{r, echo = FALSE}
+```{r, echo = FALSE, warning=FALSE}
 ### Packages
 library(tidyverse)
 library(knitr)
 library(ggpubr) 
+library()
 
 ###Load data
 load(file="CrossFell.data.prepd.rda")
@@ -27,17 +30,19 @@ Cross Fell is part of Kirkland Fell, one of five contiguous upland commons in ea
 ## Field Method
 
 Surveyors measured vegetation height of a variety of taxa on five sucessive surveys on montane grassland at Cross Fell in the North Pennines.  The surveys took place in 2003, 2005, 2008, 2010 and 2013.  Survey quadrats were randomly located each year.  There were different numbers of quadrats in each survey year.  
-```{r}
-quad.n
+```{r, echo = FALSE}
+kable(quad.n)
+
 ```
+
 Quadrats were placed at the random points that fell within montane heath on Cross Fell.  The same set of random points was used in 2003 and 2005, but new sets generated in each of 2008, 2010 and 2013.
   
 Species data was aggregated into four taxa:   
   
-* **Fo** Sheep's Fescue *Festuca ovina*  
-* **grm** All gramminoids  
-* **moss** All mosses and lichen  
-* **Vm** Bilberry *Vaccinium myrtillus*  
+* **Fo** Sheep's Fescue *Festuca ovina*
+* **grm** All gramminoids
+* **moss** All mosses and lichen
+* **Vm** Bilberry *Vaccinium myrtillus*
   
 There is a record for each height measurement per taxon per year (although the quadrats are not labelled).  Up to four height measurements were taken for bilberry cover in each quadrat, and up to three measurements for graminoids.  
 
@@ -46,14 +51,31 @@ The number of measurements taken of each taxon in each year is as follows:
 kable(table(ht.data$taxon, ht.data$year))
 ```
 
-The data were saved into the Rdata format file *CrossFell.data.prepd.rda*.
 
-###Results
-```{r, echo = FALSE}
-summary(ht.data)
-```
+## Data analysis
+One of the desired outcomes of the intervention was a significant increase in vegetation height, as an indicator of favourable condition.  The vegetation height data was therefore analysed for differences in the height of each taxon between years.  
 
-The following are the means 
+**For each taxon-year** the following summary values of **vegetation height** were calculated: 
+
+* mean
+* median
+* standard deviation
+* variance
+
+The data was then tested for: 
+
+* normality using the Anderson Darling test and 
+* homoscedasticity (homogeneity of variances) using the Bartlett Test and the Fligner Killeen test. 
+
+The data was found not to meet the requirements of normality or homoscedasticity required for ANOVA so non-parametric testing was required.  
+
+The mean difference vegetation height in each taxon was then tested using the Kruskall Wallace test.  
+
+Having found significant differences, post-hoc testing using pairwise Mann-Whitney U tests was carried out to identify and characterise the change.  .  
+
+## Results
+
+The following mean heights were measured for each taxon in each year:  
 
 ```{r, echo = FALSE}
 ####Height means: 
@@ -62,12 +84,12 @@ ht.means <- ht.data %>%
   summarise(mean = mean(height), median = median(height), sd = sd(height),
             n = length(height)) 
 
-ht.means %>% print(n=nrow(ht.means))
+kable(ht.means)
 ```
 
 Plotted this looks as follows:  
 
-```{r}
+```{r, echo = FALSE}
 #box plots by height and year for each taxon
 ggplot(ht.data, aes(x = year, y= height)) +
   geom_boxplot(aes(colour = taxon)) 
@@ -75,14 +97,13 @@ ggplot(ht.data, aes(x = year, y= height)) +
 
 Visually there appears to be some difference in the mean heights taken together.  In order to determine if there has in fact been a change in vegetation height over the survey period, and between individual surveys, we need to analyse whether the means have a statistically significant difference. 
 
-
 ##Analysis
 
 ###Test for Differences in Means
 
 ###ANOVA: test assumptions 
 
-The most powerful method for testing whether there is a significant change in the height of each taxon between survey years is Analysis of Variance (ANOVA).  For us to be able to use this our data must comply with teh following assumptions: 
+The most powerful method for testing whether there is a significant change in the height of each taxon between survey years is Analysis of Variance (ANOVA).  For us to be able to use this our data must comply with the following assumptions: 
 
 * **Independence of cases**: this is met because each quadrat was selected at random each year.  
 * **Equality of variances (homoscedasticity)**: we will test for this. 
