@@ -1,5 +1,5 @@
 ---
-title: 'Statistics Case Study: Cross Fell Grazing 2013: Report'
+title: 'Statistics Case Study: Cross Fell Grazing 2013'
 author: "CK"
 date: "19 Sept 2017"
 output:
@@ -8,15 +8,22 @@ output:
 ---
 Time run: `r Sys.time()`
 
-```{r, echo = FALSE, warning=FALSE}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ### Packages
 library(tidyverse)
 library(knitr)
 library(ggpubr) 
-library()
+library(broom)
+library(nortest)
+
 
 ###Load data
 load(file="CrossFell.data.prepd.rda")
+
+### Select data for analysis
+
+ht.data <- filter(ht.data, taxon == "Vm")
+ht.data$taxon <- droplevels(ht.data$taxon)
 ```
 
 #Natural England Statistics Case Study 
@@ -29,7 +36,7 @@ Cross Fell is part of Kirkland Fell, one of five contiguous upland commons in ea
 
 ## Field Method
 
-Surveyors measured vegetation height of a variety of taxa on five sucessive surveys on montane grassland at Cross Fell in the North Pennines.  The surveys took place in 2003, 2005, 2008, 2010 and 2013.  Survey quadrats were randomly located each year.  There were different numbers of quadrats in each survey year.  
+Surveyors measured vegetation height of a variety of taxa, including bilberry *Vaccinium myrtillus* on five sucessive surveys on montane grassland at Cross Fell in the North Pennines.  The surveys took place in 2003, 2005, 2008, 2010 and 2013.  Survey quadrats were randomly located each year.  There were different numbers of quadrats in each survey year.  
 ```{r, echo = FALSE}
 kable(quad.n)
 
@@ -37,50 +44,23 @@ kable(quad.n)
 
 Quadrats were placed at the random points that fell within montane heath on Cross Fell.  The same set of random points was used in 2003 and 2005, but new sets generated in each of 2008, 2010 and 2013.
   
-Species data was aggregated into four taxa:   
-  
-* **Fo** Sheep's Fescue *Festuca ovina*
-* **grm** All gramminoids
-* **moss** All mosses and lichen
-* **Vm** Bilberry *Vaccinium myrtillus*
-  
-There is a record for each height measurement per taxon per year (although the quadrats are not labelled).  Up to four height measurements were taken for bilberry cover in each quadrat, and up to three measurements for graminoids.  
+There is a record for each height measurement per year (although the quadrats are not labelled).  Up to four bilberry height measurements were taken in each quadrat.  
 
-The number of measurements taken of each taxon in each year is as follows: 
+The number of measurements taken in each year is as follows: 
 ```{r, echo=FALSE}
-kable(table(ht.data$taxon, ht.data$year))
+kable(data.frame(table(ht.data$year)), col.names = c("year", "measurements"), align = "l")
 ```
 
 
-## Data analysis
-One of the desired outcomes of the intervention was a significant increase in vegetation height, as an indicator of favourable condition.  The vegetation height data was therefore analysed for differences in the height of each taxon between years.  
+## Data analysis and results
+One of the desired outcomes of the intervention was a significant increase in bilberry height, as an indicator of favourable condition.  The bilberry height data was therefore analysed for differences in the mean height between years.  
 
-**For each taxon-year** the following summary values of **vegetation height** were calculated: 
-
-* mean
-* median
-* standard deviation
-* variance
-
-The data was then tested for: 
-
-* normality using the Anderson Darling test and 
-* homoscedasticity (homogeneity of variances) using the Bartlett Test and the Fligner Killeen test. 
-
-The data was found not to meet the requirements of normality or homoscedasticity required for ANOVA so non-parametric testing was required.  
-
-The mean difference vegetation height in each taxon was then tested using the Kruskall Wallace test.  
-
-Having found significant differences, post-hoc testing using pairwise Mann-Whitney U tests was carried out to identify and characterise the change.  .  
-
-## Results
-
-The following mean heights were measured for each taxon in each year:  
+**For each year** the following summary values of **vegetation height** were calculated: 
 
 ```{r, echo = FALSE}
 ####Height means: 
 ht.means <- ht.data %>%
-  group_by(taxon, year) %>% 
+  group_by(year) %>% 
   summarise(mean = mean(height), median = median(height), sd = sd(height),
             n = length(height)) 
 
@@ -92,217 +72,59 @@ Plotted this looks as follows:
 ```{r, echo = FALSE}
 #box plots by height and year for each taxon
 ggplot(ht.data, aes(x = year, y= height)) +
-  geom_boxplot(aes(colour = taxon)) 
-```
-
-Visually there appears to be some difference in the mean heights taken together.  In order to determine if there has in fact been a change in vegetation height over the survey period, and between individual surveys, we need to analyse whether the means have a statistically significant difference. 
-
-##Analysis
-
-###Test for Differences in Means
-
-###ANOVA: test assumptions 
-
-The most powerful method for testing whether there is a significant change in the height of each taxon between survey years is Analysis of Variance (ANOVA).  For us to be able to use this our data must comply with the following assumptions: 
-
-* **Independence of cases**: this is met because each quadrat was selected at random each year.  
-* **Equality of variances (homoscedasticity)**: we will test for this. 
-* **Normality**: we will test for this if the variances are equal.  
-
-####Plot data
-
-Key points to look out for 
-
-1. Outliers: look for individual points on the box plots.  Lots of outliers means the data is unlikely to meet homoscedasticity or normality assumptions.  
-
-2. Skewness: High skewness means data is unlikely to be normally distributed.  Density plot will be skewed and boxplots will be asymmetrical.
-
-3. Unequal variance: Unequal box sizes will indicate that variances are not equal.  If there is little data, then this may not be reliable, as variances can appear unequal when they aren't.
-
-
-```{r}
-#density plots by height and year 
-ggplot(ht.data, aes(x= height, colour = year)) +
-  geom_density()
-
+  geom_boxplot() 
 ```
 
 
-```{r}
-#density plots by height and taxon
-ggplot(ht.data, aes(x= height, colour = taxon)) +
-  geom_density()
-
-```
-
-
-```{r}
-#density plots by height and year for each taxon
-ggplot(ht.data, aes(x= height, colour = year)) +
-  geom_density() +
-  facet_wrap(~taxon) 
-```
-
-
-```{r}
-#box plots by height and year for each taxon
-ggplot(ht.data, aes(y= height, x = year)) +
-  geom_boxplot() +
-  facet_wrap(~taxon) 
-```
-
-
-#####Comments on the plots: 
-Lots of outliers in Fest.ov. and graminoids.  All four appear to be skewed, in particular there are a lot of 1cm heights.  Variances of graminoids appear unequal.  
-
-
-####Test for homoskedasticity 
-Testing whether the variances are the same: 
-
-Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
-
-```{r}
-#run test on each taxa in turn (saves resultsht into a list)
-bart.l <- as.list(by(ht.data, ht.data$taxon, 
-             function(x) bartlett.test(height ~ year, data = x)))
-#put results from list into a dataframe
-bart.df          <- data.frame(cbind(taxon = names(bart.l)))
-bart.df$statistic<- bart.l %>% map_dbl("statistic") 
-bart.df$df       <- bart.l %>% map_dbl("parameter")
-bart.df$p.value  <- bart.l %>% map_dbl("p.value") 
-bart.df$sig.sym  <- as.character(symnum(bart.df$p.value,
-                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
-                           symbols = c("***", "**", "*", "")))
-bart.df$sig.txt  <- if_else(condition = bart.df$p.value < 0.001, 
-                            true = "p<0.001", 
-                            false = paste0("p=", round(bart.df$p.value, digits=3)))
-bart.df$method   <- bart.l %>% map_chr("method")
-bart.df$formula  <- bart.l %>% map_chr("data.name")
-bart.df
-```
-None of these have homogeneous variances.  
-
-The Fligner-Killeen test: **if the p-value is < 0.05 then data not suitable for ANOVA**
-
-```{r}
-#run test on each taxa in turn (saves results into a list)
-flig.l <- as.list(by(ht.data, ht.data$taxon, 
-             function(x) fligner.test(height ~ year, data = x)))
-#put results from list into a dataframe
-flig.df          <- data.frame(cbind(taxon = names(flig.l)))
-flig.df$statistic<- flig.l %>% map_dbl("statistic") 
-flig.df$df       <- flig.l %>% map_dbl("parameter")
-flig.df$p.value  <- flig.l %>% map_dbl("p.value") 
-flig.df$sig.sym  <- as.character(symnum(flig.df$p.value,
-                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
-                           symbols = c("***", "**", "*", "")))
-flig.df$sig.txt  <- if_else(condition = flig.df$p.value < 0.001, 
-                            true = "p<0.001", 
-                            false = paste0("p=", round(flig.df$p.value, digits=3)))
-flig.df$method   <- flig.l %>% map_chr("method")
-flig.df$formula  <- flig.l %>% map_chr("data.name")
-flig.df
-```
-
-The variances of the moss data are homogeneous according to this test, but none of the others are.   
-
-####
-test for normality using the Anderson Darling test for the composite hypothesis of normality.  If p > 0.05 then the distribution is normal.   
-```{r}
-library(nortest)
-ad.test(ht.data$height)
-```
-The height data for all species is not normal.  
-
-```{r}
-#run test on each taxa and year combination in turn 
-norm.df.taxa <- ht.data %>%
-  group_by(taxon) %>%
+```{r, echo=FALSE}
+#run Anderson Darling test for normality on each year in turn
+norm <- ht.data %>%
+  group_by(year) %>%
   do(broom::tidy(ad.test(.$height)))
-
-norm.df.taxa$sig.sym  <- as.character(symnum(norm.df.taxa$p.value,
-                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
-                           symbols = c("***", "**", "*", "")))
-norm.df.taxa$sig.txt  <- if_else(condition = norm.df.taxa$p.value < 0.001, 
-                            true = "p<0.001", 
-                            false = paste0("p=", 
-                                           round(norm.df.taxa$p.value, digits=3)))
-norm.df.taxa[c(1,2,5,6,3)] %>% arrange(-p.value)
-```
-The distributions of all taxa is not normal. 
-
-```{r,  }
-#run test on each taxa and year combination in turn 
-norm.df <- ht.data %>%
-  group_by(taxon, year) %>%
-  do(broom::tidy(ad.test(.$height)))
-
-norm.df$sig.sym  <- as.character(symnum(norm.df$p.value,
-                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
-                           symbols = c("***", "**", "*", "")))
-norm.df$sig.txt  <- if_else(condition = norm.df$p.value < 0.001, 
-                            true = "p<0.001", 
-                            false = paste0("p=", 
-                                           round(norm.df$p.value, digits=3)))
-
-library(pander) 
-norm.df[c(1,2,3,6,7,4)] %>% arrange(-p.value)
-```
-The distribution of only 6 of the 20 taxon/year combinations are normal.   
-
-
-
-
-####ANOVA: test assumptions - **Conclusion** 
-
-As each taxon failed one or more tests for homoscedacity, and the normality assumption is also violated in the majority of cases, we cannot use ANOVA to look for differences in means.  We must therefore use an alternative test.  
-
-###Non-parametric tests
-
-The Kruskal Wallis test of ranks is non-parametric, which means it does not require the data to be normally distributed or homoscedastic.  This means it can handle situations where there are a lot of outliers.  It is less powerful than one-way ANOVA, which means more likely fail to detect an effect (type II error), but it is less likely to report an effect if there isn't one (type I error).   The null hypothesis of the test is that data are taken from the same population.  
-
-The Kruskal-Wallis test of ranks: **if the p-value is < 0.05 then we reject the null hypothesis that there is no change**
-
-```{r}
-#run test on each taxa in turn (saves results into a list)
-krusk.l <- as.list(by(ht.data, ht.data$taxon, 
-             function(x) kruskal.test(height ~ year, data = x)))
-#put results from list into a dataframe
-krusk.df          <- data.frame(cbind(taxon = names(krusk.l)))
-krusk.df$statistic<- krusk.l %>% map_dbl("statistic") 
-krusk.df$df       <- krusk.l %>% map_dbl("parameter")
-krusk.df$p.value  <- krusk.l %>% map_dbl("p.value") 
-krusk.df$sig.sym  <- as.character(symnum(krusk.df$p.value,
-                           cutpoints = c(0, 0.001, 0.01, 0.05, 1),
-                           symbols = c("***", "**", "*", "")))
-krusk.df$sig.txt  <- if_else(condition = krusk.df$p.value < 0.001, 
-                            true = "p<0.001", 
-                            false = paste0("p=", round(krusk.df$p.value, digits=3)))
-krusk.df$method   <- krusk.l %>% map_chr("method")
-krusk.df$formula  <- krusk.l %>% map_chr("data.name")
-krusk.df
 ```
 
-The p-value for all taxa is substantialy below 0.05, which strongly support rejecting the null hypothesis, which suggests that there is significant change in vegetation height
+The data was tested for normality using the Anderson Darling test.  Only the measurements in 2005 were not normally distributed  (A = `r round(norm$statistic[which(norm$year == 2005)], 4)`, p = `r round(norm$p.value[which(norm$year == 2005)], 4)`).  The other years' measurements were normally distributed (2003: A = `r round(norm$statistic[which(norm$year == 2003)], 4)`, p = `r round(norm$p.value[which(norm$year == 2003)], 4)`; 2008: A = `r round(norm$statistic[which(norm$year == 2008)], 4)`, p = `r round(norm$p.value[which(norm$year == 2008)], 4)`; 2010: A = `r round(norm$statistic[which(norm$year == 2010)], 4)`, p = `r round(norm$p.value[which(norm$year == 2010)], 4)`; 2013: A = `r round(norm$statistic[which(norm$year == 2013)], 4)`, p = `r round(norm$p.value[which(norm$year == 2013)], 4)`)
 
-####Post-hoc testing: 
-This test does not indicate which pairs of observations are significantly diferent from each other.  We can carry out pairwise Mann-Whitney U tests on each pair, given that we have found there to be a significant difference between the groups. In `R` this test uses awkward syntax so we need to filter the data first using `ht.data.test <- filter(ht.data, taxon = "taxon")` 
-
-```{r}
-#all taxa - carry out tests and report p values
-ht.data.test <- ht.data
-pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
+```{r, echo=FALSE}
+#run Bartlett test for homogeneity of variances 
+bart <- bartlett.test(height ~ year, data = ht.data)
 ```
 
-Significant differences are found in all successive surveys except 2005-2008. 
+The data were tested for homoscedasticity (homogeneity of variances) using the Bartlett Test. The variances were not found to be homogeneous (Bartlett's K-squared = `r bart$statistic`, p = `r bart$p.value`).  The data was found not to meet the requirements of homoscedasticity required for ANOVA so non-parametric testing was required.  
 
-```{r}
-#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
+```{r, echo=FALSE}
+#run Kruskall Wallace test
+krusk <- kruskal.test(height ~ year, data = ht.data)
+```
+The mean difference vegetation height in each taxon was tested using the Kruskall Wallace rank sum test test. There was a significant difference between the means (Kruskal-Wallis chi-squared = `r krusk$statistic`, p = `r krusk$p.value`).   
+
+
+```{r, echo = FALSE}
+#run Wilcox test using function ggpubr::compare_means() to calculate and format significant differnce. 
 wilc.pairw <- compare_means(formula = height ~ year, 
-                            data = ht.data.test, 
+                          data = ht.data, 
                             method = "wilcox.test", paired = FALSE)
+
+#add means
+wilc.pairw <- wilc.pairw %>% 
+  left_join(., select(ht.means, year, mean), by = c("group1" = "year")) %>% 
+  rename(mean1 = mean)
+wilc.pairw <- wilc.pairw %>% 
+  left_join(., select(ht.means, year, mean), by = c("group2" = "year")) %>% 
+  rename(mean2 = mean)
+wilc.pairw$mean.diff <- wilc.pairw$mean2 - wilc.pairw$mean1
+  
 wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
 
+#make vector of means
+ht.means.vec <- ht.means$mean
+names(ht.means.vec) <- ht.means$year
+```
+Having found significant differences, post-hoc testing using pairwise Wilcoxson rank sum tests (also known as Mann-Whitney U test) was carried out to identify and characterise the change. There earliest significant increase in vegetation height occurs in 2010.  There was a significant increase in mean height of `r round(wilc.pairw$mean.diff[1], 2)`cm between 2003 (mean = `r round(ht.means.vec["2003"], 2)`cm) and 2010 (mean = `r round(ht.means.vec["2010"], 2)`cm) (p = `r wilc.pairw$p.format[1]`), and in fact also between 2010 and all previous survey years (2005: height increase =  `r round(wilc.pairw$mean.diff[2], 2)`, p = `r wilc.pairw$p.format[2]`; 2008: height increase =  `r round(wilc.pairw$mean.diff[3], 2)`, p = `r wilc.pairw$p.format[3]`).  Although the mean height of bilberry subsequently decreased by `r round(wilc.pairw$mean.diff[7], 2)`cm between 2010 (mean = `r round(ht.means.vec["2010"], 2)`cm) and 2013 (mean = `r round(ht.means.vec["2013"], 2)`cm) (p = `r wilc.pairw$p.format[7]`), over the entire survey period there is an overall increase of `r round(wilc.pairw$mean.diff[4], 2)`cm between 2003 (mean = `r round(ht.means.vec["2003"], 2)`cm) and 2013 (mean = `r round(ht.means.vec["2013"], 2)`cm) (p = `r wilc.pairw$p.format[4]`).
+
+This is shown in the graph below: 
+
+```{r, echo= FALSE}
 #generate list of brackets
 my_comparisons <- list() 
 for (i in 1:nrow(wilc.pairw)) {
@@ -310,7 +132,7 @@ for (i in 1:nrow(wilc.pairw)) {
   }
 
 #prepare plot
-p <- ggplot(ht.data.test, aes(x = year, y = height)) +
+p <- ggplot(ht.data, aes(x = year, y = height)) +
   geom_boxplot()
 
 # Add pairwise comparisons p-value to plot
@@ -318,156 +140,3 @@ p + stat_compare_means(comparisons = my_comparisons,
                        label = "p.signif", 
                        hide.ns = FALSE)
 ```
-
-
-
-
-```{r}
-#Sheep's fescue
-ht.data.test <- filter(ht.data, taxon == "Fo")
-pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
-```
-For Sheep's fescue, there is a significant change from 2003-2005 (p = 0.00157) and 2010-2013 (p = 0.00202).  There is no significant change between the last survey in 2013 and the first survey in 2003.
-
-
-```{r}
-#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
-wilc.pairw <- compare_means(formula = height ~ year, 
-                            data = ht.data.test, 
-                            method = "wilcox.test", paired = FALSE)
-wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
-
-#generate list of brackets
-my_comparisons <- list() 
-for (i in 1:nrow(wilc.pairw)) {
-  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
-  }
-
-#prepare plot
-p <- ggplot(ht.data.test, aes(x = year, y = height)) +
-  geom_boxplot()
-
-# Add pairwise comparisons p-value to plot
-p + stat_compare_means(comparisons = my_comparisons, 
-                       label = "p.signif", 
-                       hide.ns = FALSE)
-```
-
-
-```{r}
-#all graminoids
-ht.data.test <- filter(ht.data, taxon == "grm")
-pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
-```
-
-
-```{r}
-#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
-wilc.pairw <- compare_means(formula = height ~ year, 
-                            data = ht.data.test, 
-                            method = "wilcox.test", paired = FALSE)
-wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
-
-#generate list of brackets
-my_comparisons <- list() 
-for (i in 1:nrow(wilc.pairw)) {
-  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
-  }
-
-#prepare plot
-p <- ggplot(ht.data.test, aes(x = year, y = height)) +
-  geom_boxplot()
-
-# Add pairwise comparisons p-value to plot
-p + stat_compare_means(comparisons = my_comparisons, 
-                       label = "p.signif", 
-                       hide.ns = FALSE)
-```
-
-For all graminoids there is signifcant difference between 2003-2005 (p < 0.0001) and 2008-2010 (p = 0.0065).  The difference between teh original survey in 2003 and the final survey in 2013 is significant (p<0.0001)
-
-```{r}
-#Mosses and lichen
-ht.data.test <- filter(ht.data, taxon == "moss")
-pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
-```
-
-
-```{r}
-#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
-wilc.pairw <- compare_means(formula = height ~ year, 
-                            data = ht.data.test, 
-                            method = "wilcox.test", paired = FALSE)
-wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
-
-#generate list of brackets
-my_comparisons <- list() 
-for (i in 1:nrow(wilc.pairw)) {
-  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
-  }
-
-
-#prepare plot
-p <- ggplot(ht.data.test, aes(x = year, y = height)) +
-  geom_boxplot()
-
-# Add pairwise comparisons p-value to plot
-p + stat_compare_means(comparisons = my_comparisons, 
-                       label = "p.signif", 
-                       hide.ns = FALSE)
-```
-
-For mosses and lichen there was no significant difference between successive surveys.  However, the 2003 heights were significantly different the final survey in 2013 (p<0.0001)
-
-
-```{r}
-#bilberry
-ht.data.test <- filter(ht.data, taxon == "Vm")
-pairwise.wilcox.test(x = ht.data.test$height, g = ht.data.test$year, paired = FALSE)
-```
-
-
-```{r}
-#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
-wilc.pairw <- compare_means(formula = height ~ year, 
-                            data = ht.data.test, 
-                            method = "wilcox.test", paired = FALSE)
-wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
-
-#generate list of brackets
-my_comparisons <- list() 
-for (i in 1:nrow(wilc.pairw)) {
-  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
-  }
-
-#prepare plot
-p <- ggplot(ht.data.test, aes(x = year, y = height)) +
-  geom_boxplot()
-
-# Add pairwise comparisons p-value to plot
-p + stat_compare_means(comparisons = my_comparisons, 
-                       label = "p.signif", 
-                       hide.ns = FALSE) +
-  labs(title = "Bilberry height by survey year", caption = "Brackets indicate significant differences.")
-```
-
-For bilberry, the 2008 heights differed significantly from the 2010 survey (p<0.0001).  The heights in 2003 were significantly different from the mean height in 2013 (p = 0.00269)
-
-
-```{r}
-rm(ht.data.test) #clean up
-```
-
-
-
-```{r}
-#box plots by height and year for each taxon
-ggplot(ht.means, aes(x = year, y= mean, group = taxon, colour = taxon)) +
-  geom_point() +
-  geom_line()  +
-  ylim(0,9) +
-  labs(caption = "Figure 3. Mean height of key vegetation components: bilberry, sheep’s fescue, and moss and lichens", 
-       x = "Mean height (cm)", y = "Survey year")
- # facet_wrap(~taxon) 
-```
-
