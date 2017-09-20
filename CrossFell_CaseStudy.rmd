@@ -8,6 +8,10 @@ output:
 ---
 Time run: `r Sys.time()`
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 ### Packages
 library(tidyverse)
@@ -64,7 +68,7 @@ ht.means <- ht.data %>%
   summarise(mean = mean(height), median = median(height), sd = sd(height),
             n = length(height)) 
 
-kable(ht.means)
+kable(ht.means, digits = 2, align = "l", caption = "Bilberry vegetation height summary")
 ```
 
 Plotted this looks as follows:  
@@ -72,7 +76,8 @@ Plotted this looks as follows:
 ```{r, echo = FALSE}
 #box plots by height and year for each taxon
 ggplot(ht.data, aes(x = year, y= height)) +
-  geom_boxplot() 
+  geom_boxplot() +
+  labs(title = "Bilberry height by survey year")
 ```
 
 
@@ -120,7 +125,7 @@ wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
 ht.means.vec <- ht.means$mean
 names(ht.means.vec) <- ht.means$year
 ```
-Having found significant differences, post-hoc testing using pairwise Wilcoxson rank sum tests (also known as Mann-Whitney U test) was carried out to identify and characterise the change. There earliest significant increase in vegetation height occurs in 2010.  There was a significant increase in mean height of `r round(wilc.pairw$mean.diff[1], 2)`cm between 2003 (mean = `r round(ht.means.vec["2003"], 2)`cm) and 2010 (mean = `r round(ht.means.vec["2010"], 2)`cm) (p = `r wilc.pairw$p.format[1]`), and in fact also between 2010 and all previous survey years (2005: height increase =  `r round(wilc.pairw$mean.diff[2], 2)`, p = `r wilc.pairw$p.format[2]`; 2008: height increase =  `r round(wilc.pairw$mean.diff[3], 2)`, p = `r wilc.pairw$p.format[3]`).  Although the mean height of bilberry subsequently decreased by `r round(wilc.pairw$mean.diff[7], 2)`cm between 2010 (mean = `r round(ht.means.vec["2010"], 2)`cm) and 2013 (mean = `r round(ht.means.vec["2013"], 2)`cm) (p = `r wilc.pairw$p.format[7]`), over the entire survey period there is an overall increase of `r round(wilc.pairw$mean.diff[4], 2)`cm between 2003 (mean = `r round(ht.means.vec["2003"], 2)`cm) and 2013 (mean = `r round(ht.means.vec["2013"], 2)`cm) (p = `r wilc.pairw$p.format[4]`).
+Having found significant differences, post-hoc testing using pairwise  was carried out to identify and characterise the change. There earliest significant increase in vegetation height occurs in 2010.  There was a significant increase in mean height of `r round(wilc.pairw$mean.diff[1], 2)`cm between 2003 (mean = `r round(ht.means.vec["2003"], 2)`cm) and 2010 (mean = `r round(ht.means.vec["2010"], 2)`cm) (p = `r wilc.pairw$p.format[1]`), and in fact also between 2010 and all previous survey years (2005: height increase =  `r round(wilc.pairw$mean.diff[2], 2)`, p = `r wilc.pairw$p.format[2]`; 2008: height increase =  `r round(wilc.pairw$mean.diff[3], 2)`, p = `r wilc.pairw$p.format[3]`).  Although the mean height of bilberry subsequently decreased by `r round(wilc.pairw$mean.diff[7], 2)`cm between 2010 (mean = `r round(ht.means.vec["2010"], 2)`cm) and 2013 (mean = `r round(ht.means.vec["2013"], 2)`cm) (p = `r wilc.pairw$p.format[7]`), over the entire survey period there is an overall increase of `r round(wilc.pairw$mean.diff[4], 2)`cm between 2003 (mean = `r round(ht.means.vec["2003"], 2)`cm) and 2013 (mean = `r round(ht.means.vec["2013"], 2)`cm) (p = `r wilc.pairw$p.format[4]`).
 
 This is shown in the graph below: 
 
@@ -140,3 +145,76 @@ p + stat_compare_means(comparisons = my_comparisons,
                        label = "p.signif", 
                        hide.ns = FALSE)
 ```
+
+## Understanding the statistics
+
+### Topic
+* What question does it answer:
+* How do I read it:
+* How does it work:
+* Tips:
+
+### Mean
+* What question does it answer: What is the average value of my data?
+* How do I read it: It is the average of all the values.
+* How does it work: It is the sum of all the values, divided by the number of values.
+
+### Median
+* What question does it answer: What is the middle value of my data? 
+* How do I read it: It's just the middle value. 
+* How does it work: All the values are lined up in order and the middle value is found.  
+
+### standard deviation, sd, sigma, $\sigma$
+* What question does it answer: How spread out are the values?
+* How do I read it: The greater the standard deviation, the wider the values are spread around the mean.
+* How does it work: The standard deviation is the square root of the variance. The variance is the average of the squared differences from the mean.
+
+### n
+* What question does it answer: What is the size of my sample?
+* How do I read it / how does it work: It is simply the number of observations.
+* Tips: If n is very small (e.g. below 5), then most statistics are unlikely to be accurate.
+
+### boxplot (box and whisker plot)
+* What does it show: It shows the distribution of the data. 
+* How do I read it: First understand how it is drawn (below).  Then you can use it to:  
+    + get an impression of how evenly the data is distributed (is the boxplot symmetrical), 
+    + whether the data is skewed (is the median closer to one end of the box than the other), 
+    + whether there are outliers, 
+    + whether the variances of two samples are similar (similar sized boxes).
+* How does it work: There are many ways of drawing these but the most common is as follows:  
+    + the middle line is the *median*, 
+    + the box goes from the first to the third quartile (i.e. it encloses the middle half of the data), known as the *inter-quartile range*, 
+    + the lines extend to the highest and lowest values, 
+    + points show *outliers*, which are usually defined as values which are further than 1.5 times the inter-quartile range from the first or third quartile.    
+
+### p value
+* What question does it answer: Is the statistic I have calculated *statistically significant*?
+* How do I read it: In most cases, if p is smaller than 0.05 then you have found a statistically significant result.  It means that you have a smaller than 1 in 20 chance of your *null hypothesis* being true purely by chance.  In most cases in ecology the null hypothesis (*H0*) is 'no difference'.  However, it depends on the test you are carrying out and you should always check.  It also depends on the *significance level* (alpha or $\alpha$) that has been decided beforehand.  In ecology $\alpha$ is usually 0.05.  
+* How does it work: It is the probability of finding the observed, or more extreme, results when the null hypothesis (H0) of a study question is true – the definition of ‘extreme’ depends on how the hypothesis is being tested.
+* Tips:  Always carefully check what the *null hypothesis* is.
+
+
+### Anderson Darling test for test for the composite hypothesis of normality
+* What question does it answer: Is the data normally distributed?
+* How do I read it: If p is greater than 0.05 then the distribution is normal.
+* How does it work:  The test compares the data to a normal distribution with the same mean and standard deviation and calculates the probability of getting a more extreme result (i.e. more different to normal) by chance.  
+
+### Bartlett test for homogeneity of variances
+* What question does it answer: How different is the spread (variance) of each sample?  Are they homogeneous?
+* How do I read it:  If the p-value is smaller than 0.05 then the variances are very different and not homogeneous.  
+* How does it work: The null hypothesis is that the variance is the same for all samples.  The test compares the variances to each other and calculates the probability of getting a more extreme result (i.e. more different from each other) by chance.  
+
+#### Kruskal-Wallace
+* What question does it answer: How different are the means of our samples from each other?  
+* How do I read it: If the p-value is smaller than 0.05 then at least two of the samples are significantly different from each other.  It will not tell you which two samples.  
+* How does it work: The null hypothesis is that the samples are drawn from the same population, i.e. the true mean is the same for each survey.  The test lines up all the values in order and assigns ranks to them.  It then calculates the probability of getting a more extreme result (i.e. more different from each other) by chance.  
+* Tip: You can use this test if your data is not normally distributed or if the variances are not homogeneous. 
+
+#### pairwise Wilcoxson rank sum tests (also known as Mann-Whitney U test)
+* What question does it answer: Which pairs of samples are significantly different from each other.    
+* How do I read it: The test will return a p-value for combination of two samples.  If the p-value is smaller than 0.05 for a particular pairing then the two samples are significantly different from each other.   
+* How does it work: The null hypothesis is that the samples are drawn from the same population, i.e. the true mean is the same for each survey.  The test lines up all the values in order and assigns ranks to them.  It then calculates the probability of getting a more extreme result (i.e. more different from each other) by chance.  
+* Tip: You cannot use this test unless you have already found that there is a significant difference between at least two samples.  If there is not, the test may suggest that there are significant differences, but this is likely to be a false-positive.  
+
+
+

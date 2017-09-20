@@ -9,28 +9,13 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, message=FALSE, warning=FALSE, include=FALSE}
-### Packages
-library(tidyverse)
-library(knitr)
-library(ggpubr) 
-library(broom)
-library(nortest)
 
-
-###Load data
-load(file="CrossFell.data.prepd.rda")
-
-### Select data for analysis
-
-ht.data <- filter(ht.data, taxon == "Vm")
-```
-
-```{r, echo=FALSE}
-#run Bartlett test for homogeneity of variances 
-bart <- bartlett.test(height ~ year, data = ht.data)
-bart$statistic
-```
-
-The data were teste for homoscedasticity (homogeneity of variances) using the Bartlett Test. The variances were not found to be homogeneous (Bartlett's K-squared = `r bart$statistic`, p = `r bart$p.value`)
-
+### boxplot (box and whisker plot)
+* What does it show: It shows a *five number summary* of your data. 
+* How do I read it: There are many ways of drawing these but the most common is as follows:  
+    + the middle line is the *median*, 
+    + the box goes from the first to the third quartile (i.e. it encloses the middle half of the data), known as the *inter-quartile range*, 
+    + the lines extend to the highest and lowest values, 
+    + points show *outliers*, which are usually defined as values 
+* How does it work:
+* Tips:
