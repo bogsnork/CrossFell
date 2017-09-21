@@ -9,7 +9,7 @@ output:
 Time run: `r Sys.time()`
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
@@ -59,6 +59,7 @@ kable(data.frame(table(ht.data$year)), col.names = c("year", "measurements"), al
 ## Data analysis and results
 One of the desired outcomes of the intervention was a significant increase in bilberry height, as an indicator of favourable condition.  The bilberry height data was therefore analysed for differences in the mean height between years.  
 
+### Data exploration
 **For each year** the following summary values of **vegetation height** were calculated: 
 
 ```{r, echo = FALSE}
@@ -80,7 +81,7 @@ ggplot(ht.data, aes(x = year, y= height)) +
   labs(title = "Bilberry height by survey year")
 ```
 
-
+### Testing assumptions
 ```{r, echo=FALSE}
 #run Anderson Darling test for normality on each year in turn
 norm <- ht.data %>%
@@ -97,11 +98,12 @@ bart <- bartlett.test(height ~ year, data = ht.data)
 
 The data were tested for homoscedasticity (homogeneity of variances) using the Bartlett Test. The variances were not found to be homogeneous (Bartlett's K-squared = `r bart$statistic`, p = `r bart$p.value`).  The data was found not to meet the requirements of homoscedasticity required for ANOVA so non-parametric testing was required.  
 
+### Comparing differences in means
 ```{r, echo=FALSE}
-#run Kruskall Wallace test
+#run Kruskal Wallis test
 krusk <- kruskal.test(height ~ year, data = ht.data)
 ```
-The mean difference vegetation height in each taxon was tested using the Kruskall Wallace rank sum test test. There was a significant difference between the means (Kruskal-Wallis chi-squared = `r krusk$statistic`, p = `r krusk$p.value`).   
+The mean difference vegetation height in each taxon was tested using the Kruskal Wallis rank sum test test. There was a significant difference between the means (Kruskal-Wallis chi-squared = `r krusk$statistic`, p = `r krusk$p.value`).   
 
 
 ```{r, echo = FALSE}
@@ -148,33 +150,28 @@ p + stat_compare_means(comparisons = my_comparisons,
 
 ## Understanding the statistics
 
-### Topic
-* What question does it answer:
-* How do I read it:
-* How does it work:
-* Tips:
-
-### Mean
+### Data exploration
+#### Mean
 * What question does it answer: What is the average value of my data?
 * How do I read it: It is the average of all the values.
 * How does it work: It is the sum of all the values, divided by the number of values.
 
-### Median
+#### Median
 * What question does it answer: What is the middle value of my data? 
 * How do I read it: It's just the middle value. 
 * How does it work: All the values are lined up in order and the middle value is found.  
 
-### standard deviation, sd, sigma, $\sigma$
+#### standard deviation, sd, sigma, $\sigma$
 * What question does it answer: How spread out are the values?
 * How do I read it: The greater the standard deviation, the wider the values are spread around the mean.
 * How does it work: The standard deviation is the square root of the variance. The variance is the average of the squared differences from the mean.
 
-### n
+#### n
 * What question does it answer: What is the size of my sample?
 * How do I read it / how does it work: It is simply the number of observations.
 * Tips: If n is very small (e.g. below 5), then most statistics are unlikely to be accurate.
 
-### boxplot (box and whisker plot)
+#### boxplot (box and whisker plot)
 * What does it show: It shows the distribution of the data. 
 * How do I read it: First understand how it is drawn (below).  Then you can use it to:  
     + get an impression of how evenly the data is distributed (is the boxplot symmetrical), 
@@ -187,24 +184,25 @@ p + stat_compare_means(comparisons = my_comparisons,
     + the lines extend to the highest and lowest values, 
     + points show *outliers*, which are usually defined as values which are further than 1.5 times the inter-quartile range from the first or third quartile.    
 
-### p value
+### Testing assumptions
+#### p value
 * What question does it answer: Is the statistic I have calculated *statistically significant*?
 * How do I read it: In most cases, if p is smaller than 0.05 then you have found a statistically significant result.  It means that you have a smaller than 1 in 20 chance of your *null hypothesis* being true purely by chance.  In most cases in ecology the null hypothesis (*H0*) is 'no difference'.  However, it depends on the test you are carrying out and you should always check.  It also depends on the *significance level* (alpha or $\alpha$) that has been decided beforehand.  In ecology $\alpha$ is usually 0.05.  
 * How does it work: It is the probability of finding the observed, or more extreme, results when the null hypothesis (H0) of a study question is true – the definition of ‘extreme’ depends on how the hypothesis is being tested.
 * Tips:  Always carefully check what the *null hypothesis* is.
 
-
-### Anderson Darling test for test for the composite hypothesis of normality
+#### Anderson Darling test for test for the composite hypothesis of normality
 * What question does it answer: Is the data normally distributed?
 * How do I read it: If p is greater than 0.05 then the distribution is normal.
 * How does it work:  The test compares the data to a normal distribution with the same mean and standard deviation and calculates the probability of getting a more extreme result (i.e. more different to normal) by chance.  
 
-### Bartlett test for homogeneity of variances
+#### Bartlett test for homogeneity of variances
 * What question does it answer: How different is the spread (variance) of each sample?  Are they homogeneous?
 * How do I read it:  If the p-value is smaller than 0.05 then the variances are very different and not homogeneous.  
 * How does it work: The null hypothesis is that the variance is the same for all samples.  The test compares the variances to each other and calculates the probability of getting a more extreme result (i.e. more different from each other) by chance.  
 
-#### Kruskal-Wallace
+### Comparing means
+#### Kruskal-Wallis
 * What question does it answer: How different are the means of our samples from each other?  
 * How do I read it: If the p-value is smaller than 0.05 then at least two of the samples are significantly different from each other.  It will not tell you which two samples.  
 * How does it work: The null hypothesis is that the samples are drawn from the same population, i.e. the true mean is the same for each survey.  The test lines up all the values in order and assigns ranks to them.  It then calculates the probability of getting a more extreme result (i.e. more different from each other) by chance.  
@@ -215,6 +213,294 @@ p + stat_compare_means(comparisons = my_comparisons,
 * How do I read it: The test will return a p-value for combination of two samples.  If the p-value is smaller than 0.05 for a particular pairing then the two samples are significantly different from each other.   
 * How does it work: The null hypothesis is that the samples are drawn from the same population, i.e. the true mean is the same for each survey.  The test lines up all the values in order and assigns ranks to them.  It then calculates the probability of getting a more extreme result (i.e. more different from each other) by chance.  
 * Tip: You cannot use this test unless you have already found that there is a significant difference between at least two samples.  If there is not, the test may suggest that there are significant differences, but this is likely to be a false-positive.  
+
+
+## How to do it (in R)
+
+### Packages
+
+```{r}
+# Imports the required packages into R
+library(tidyverse) # Loads the following core packages: 
+  # ggplot2, for data visualisation
+  # dplyr, for data manipulation
+  # tidyr, for data tidying
+  # readr, for data import
+  # purrr, for functional programming
+  # tibble, for tibbles, a simpler type of data frame
+library(knitr)    # turns rmarkdown document to html, pdf or word
+library(ggpubr)   # helps make publication-ready graphs
+library(broom)    # cleans up code output from common functions
+library(nortest)  # functions for testing normality
+library(lattice)  # for faceting graphs
+```
+
+### Load data
+
+```{r}
+# reads an excel file and writes it to a new object: ht.data
+ht.data <- read.csv("ht.data.csv", header = TRUE)
+```
+
+### Inspect data
+
+```{r}
+# look at the data table
+View(ht.data)
+```
+
+```{r}
+# inspect data classes
+str(ht.data) # shows structure of data
+```
+Year is an integer; height is a numeric value.  That's fine, but for now, we'd like to treat 'year' as a categorical variable to make it easier to group our data.  
+
+```{r}
+# turn 'year' into a factor
+ht.data$year <- as.factor(ht.data$year) 
+```
+
+### Explore data
+
+```{r}
+#summarise the data
+summary(ht.data)
+```
+
+```{r}
+#graph the data
+plot(ht.data) #R selects plot type (usually chooses well)
+```
+
+```{r}
+# Calculate means using package `dplyr`
+ht.means <-       # create a new object
+  ht.data %>%     # take the height data
+  group_by(year) %>% # group it by year
+  summarise(         # calculate summary statistics for each group
+    mean = mean(height),     # its mean
+    median = median(height), # its median
+    sd = sd(height),         # the standard deviation
+    n = length(height)       # the number of observations
+    ) 
+
+ht.means  #print the result
+```
+
+
+### Check assumptions for statistical tests
+
+Here we want to know whether the data meets the assumptions required for 'parametric' tests which are generally more likely to find a significant difference if there is one. 
+
+The most powerful method for testing whether there is a significant change in the height of each taxon between survey years is Analysis of Variance (ANOVA).  For us to be able to use this our data must comply with teh following assumptions: 
+
+* **Independence of cases**: this is met because each quadrat was selected at random each year.  
+* **Equality of variances (homoscedasticity)**: we will test for this. 
+* **Normality**: we will test for this if the variances are equal.  
+
+#### Plot data
+
+The first step is to 'eyeball' the data.  Key points to look out for 
+
+1. Outliers: look for individual points on the box plots.  Lots of outliers means the data is unlikely to meet homoscedasticity or normality assumptions.  
+
+2. Skewness: High skewness means data is unlikely to be normally distributed.  Density plot will be skewed and boxplots will be asymmetrical.
+
+3. Unequal variance: Unequal box sizes will indicate that variances are not equal.  If there is little data, then this may not be reliable, as variances can appear unequal when they aren't.
+
+##### Boxplots
+```{r}
+#Make a series of boxplot grouped by a factor
+boxplot(height ~ year, data = ht.data) 
+```
+
+The variances (box sizes) appear to be different in the later years.  The median line in some of the boxes is very off-centre, suggesting a skewed distribution.  There are few outliers.  The 2010 results are considerably higher than previous results; its box hardly overlaps with the previous years'.   
+
+##### Histograms
+
+This plots the number of observations for a particular value.  
+```{r}
+# histograms of height by year in base R
+par(mfrow=c(3,2))
+hist(ht.data$height[which(ht.data$year == "2003")], main = "2003", xlab = "height")
+hist(ht.data$height[which(ht.data$year == "2005")], main = "2005", xlab = "height")
+hist(ht.data$height[which(ht.data$year == "2008")], main = "2008", xlab = "height")
+hist(ht.data$height[which(ht.data$year == "2010")], main = "2010", xlab = "height")
+hist(ht.data$height[which(ht.data$year == "2013")], main = "2013", xlab = "height")
+par(mfrow=c(1,1))
+
+# histograms of height by year - ggplot
+ggplot(ht.data, aes(x= height)) +
+  geom_histogram() +
+  facet_wrap(~year)
+
+# histograms of height by year - lattice
+histogram(~height|year, data = ht.data, type = "count")
+```
+
+Here we can see more clearly how the variances differ (some of the histograms are bunched, some are spread out).  
+
+##### Density plots
+Kernel density estimation (KDE) is a way to estimate the probability density function of a random variable.  Each position on the density plot gives you estimated probabilty for a given value.  The plot as a whole can be used to judge the distribution of the data.  
+
+```{r}
+#density plot of height by year - ggplot
+ggplot(ht.data, aes(x= height)) +
+  geom_density(aes(colour = year)) 
+```
+
+```{r}
+#density histogram and smoother of height by year - base R
+par(mfrow=c(3,2))
+plot(density(ht.data$height[which(ht.data$year == "2003")]),
+     main = "2003", xlab = "height", xlim = c(0,10))
+plot(density(ht.data$height[which(ht.data$year == "2005")]),
+     main = "2005", xlab = "height", xlim = c(0,10))
+plot(density(ht.data$height[which(ht.data$year == "2008")]), 
+     main = "2008", xlab = "height", xlim = c(0,10))
+plot(density(ht.data$height[which(ht.data$year == "2010")]), 
+     main = "2010", xlab = "height", xlim = c(0,10))
+plot(density(ht.data$height[which(ht.data$year == "2013")]), 
+     main = "2013", xlab = "height", xlim = c(0,10))
+par(mfrow=c(1,1))
+
+#density histogram and smoother of height by year - ggplot
+ggplot(ht.data, aes(x= height)) +
+  geom_histogram(aes(y=..density..), fill = "grey") + 
+  geom_density(colour = "red") +
+  facet_wrap(~year)
+
+#density plots and 'rug marks' of height by year - lattice
+densityplot(~height|year, data = ht.data)
+```
+
+Here we can see that the distributions do not appear to be normal.  The graphs lack long 'tails' which we would expect from the classic 'bell-curve' shape of a normal distribution. 
+
+#### Test for normality
+
+We now carry out a formal test whether the data are normally distributed. First we will check the distribution of the combined dataset: 
+
+```{r}
+# Anderson Darling test for the composite hypothesis of normality (package: nortest)
+ad.test(x = ht.data$height)
+#if p > 0.05 then the data is normally distributed
+```
+The p value is much lower than 0.05.  We therefore have to reject the null hypothesis that the data is normally distributed. 
+
+Now we will test each survey year in turn: 
+```{r}
+#run Anderson Darling test for normality on each year in turn - base R
+norm.2003 <- ad.test(ht.data$height[which(ht.data$year == "2003")])
+norm.2003
+norm.2005 <- ad.test(ht.data$height[which(ht.data$year == "2005")])
+norm.2005
+norm.2008 <- ad.test(ht.data$height[which(ht.data$year == "2008")])
+norm.2008
+norm.2010 <- ad.test(ht.data$height[which(ht.data$year == "2010")])
+norm.2010
+norm.2013 <- ad.test(ht.data$height[which(ht.data$year == "2013")])
+norm.2013
+
+# put results in a dataframe - base R
+norm <- data.frame(year = c(2003, 2005, 2008, 2010, 2013), 
+                   statistic = c(norm.2003$statistic, 
+                                 norm.2005$statistic, 
+                                 norm.2008$statistic, 
+                                 norm.2010$statistic, 
+                                 norm.2013$statistic), 
+                   p.value = c(norm.2003$p.value,
+                               norm.2005$p.value, 
+                               norm.2008$p.value, 
+                               norm.2010$p.value, 
+                               norm.2013$p.value))
+  
+#run Anderson Darling test for normality on each year in turn - dplyr and broom
+norm <-  # create a new object to hold our results
+  ht.data %>% # start with the height data
+  group_by(year) %>% # group it by year
+  do(                # do the following functions on each group element
+    tidy(            # extracts test results into a table
+      ad.test(.$height) #Anderson Darling test
+      )
+    ) 
+norm
+```
+
+Only the p value for 2005 is below 0.05, which means it has a normal distribution. None of the other samples have a normal distribution.  
+
+##### Try exponential transform
+```{r}
+#run Anderson Darling test for normality on each year in turn - dplyr and broom
+norm <-  # create a new object to hold our results
+  ht.data %>% # start with the height data
+  group_by(year) %>% # group it by year
+  do(                # do the following functions on each group element
+    tidy(            # extracts test results into a table
+      ad.test(exp(.$height)) #Anderson Darling test on log transformed data
+      )
+    ) 
+norm
+```
+hmm, its all normal now??? Need to ask SH.  
+
+
+#### Test for homogeneity of variances
+Testing whether the variances are the same: 
+
+Bartlett Test of Homogeneity of Variances: **if the p-value is smaller than 0.05 then data not suitable for ANOVA**
+
+```{r}
+#run Bartlett test for homogeneity of variances 
+bart <- bartlett.test(height ~ year, data = ht.data)
+bart
+```
+Here the null hypothesis is that at least two variances are not equal.  The p value is well below 0.05 which means that we reject that hypothesis.  
+
+Since the data is not normally distributed and the variances are not equal, we cannot use a parametric test (e.g. ANOVA) to compare the means.  
+
+### Compare means
+
+#### Kruskal-Wallis rank sum test
+
+This test estimates the probability that all the samples were drawn from the same population, i.e. that the true mean is the same for each survey.  
+```{r}
+#run Kruskal Wallis test
+krusk <- kruskal.test(height ~ year, data = ht.data)
+krusk
+```
+The null hypothesis is that the samples are drawn from the same population, so if p is smaller than 0.05 we must reject that hypothesis.  Here, p is much smaller than 0.05 so we can conclude that there is a significant difference between at lest two of the mean vegetation heights.    
+
+#### Pairwise Wilcoxson / Mann-Whitney U tests
+In order to determine between which survey years there were significant differences we can carry out **pairwise** tests, i.e. test the difference between each pair of samples.  This was not possible earlier because there is a high likelihood of false positives.  
+
+```{r}
+pairwise.wilcox.test(x = ht.data$height, g = ht.data$year, paired = FALSE)
+```
+If the p value is below 0.05 then the differences in means are statistically significant.  Here we have quite a few significant differences between 2010 and all previous years, and 2013 and all previous years.  
+
+We can graph this using the package `ggpubr`: 
+```{r}
+#run test again using function ggpubr::compare_means() to prepare brackets for graphic output. 
+wilc.pairw <- compare_means(formula = height ~ year, 
+                            data = ht.data, 
+                            method = "wilcox.test", paired = FALSE)
+wilc.pairw <- filter(wilc.pairw, p < 0.05) #select only significant results.
+
+#generate list of brackets
+my_comparisons <- list() 
+for (i in 1:nrow(wilc.pairw)) {
+  my_comparisons[[i]] <- c(wilc.pairw$group1[i], wilc.pairw$group2[i])
+  }
+
+#prepare plot
+p <- ggplot(ht.data, aes(x = year, y = height)) +
+  geom_boxplot()
+
+# Add pairwise comparisons p-value to plot
+p + stat_compare_means(comparisons = my_comparisons, 
+                       label = "p.signif", 
+                       hide.ns = FALSE)
+```
 
 
 
