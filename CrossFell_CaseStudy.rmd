@@ -233,6 +233,7 @@ library(ggpubr)   # helps make publication-ready graphs
 library(broom)    # cleans up code output from common functions
 library(nortest)  # functions for testing normality
 library(lattice)  # for faceting graphs
+library(mblm)     # for non-parametric regrettion
 ```
 
 ### Load data
@@ -502,5 +503,25 @@ p + stat_compare_means(comparisons = my_comparisons,
                        hide.ns = FALSE)
 ```
 
+### Model relationship
+
+#### Generalized additive model
+Generalized additive models are very flexible, allowing for a variety of types of independent variables and of dependent variables.  A smoother function is often used to create a “wiggly” model analogous to that used in local regression.  The gam function in the mgcv package uses smooth functions plus a conventional parametric component, and so would probably be classified as a semiparametric approach.  The summary function reports an R-squared value, and p-values for the terms. 
+```{r}
+#library(mgcv)
+
+m.gam = gam(formula = ht.data$height ~ ht.data$year)
+
+summary(m.gam)
+```
+
+
+```{r}
+#library(mgcv)
+
+m.loess = loess(formula = ht.data$height ~ as.numeric(ht.data$year))
+
+summary(m.loess)
+```
 
 
