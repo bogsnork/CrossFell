@@ -200,7 +200,7 @@ p + stat_compare_means(comparisons = my_comparisons,
 ## Testing assumptions
 ### p value
 **What question does it answer?** Is the statistic I have calculated *statistically significant*?  
-**How do I read it?** In most cases, if p is smaller than 0.05 then you have found a statisticall significant result.  It means that you have a smaller than 1 in 20 chance of of finding the observed result if the *null hypothesis* is true.  In most cases in ecology the null hypothesis (*H0*) is 'no difference'.  However, it depends on the test you are carrying out and you should always check.  It also depends on the *significance level* (alpha or $\alpha$) that has been decided beforehand.  In ecology $\alpha$ is usually 5 percent or 0.05.  
+**How do I read it?** In most cases, if p is smaller than 0.05 then you have found a statistically significant result.  It means that you have a smaller than 1 in 20 chance of of finding the observed result if the *null hypothesis* is true.  In most cases in ecology the null hypothesis (*H0*) is 'no difference'.  However, it depends on the test you are carrying out and you should always check.  It also depends on the *significance level* (alpha or $\alpha$) that has been decided beforehand.  In ecology $\alpha$ is usually 5 percent or 0.05.  
 **How does it work?** It is the probability of finding the observed, or more extreme, results when the null hypothesis (H0) of a study question is true – the definition of ‘extreme’ depends on how the hypothesis is being tested.  
 **Tips:**  Always carefully check what the *null hypothesis* is.
 
